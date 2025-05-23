@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj": {}
+    "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj": {}
   },
   "projects": {
-    "D:\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj": {
+    "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj",
+        "projectUniqueName": "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj",
         "projectName": "BussinessLogic",
-        "projectPath": "D:\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj",
+        "projectPath": "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\BussinessLogic\\BussinessLogic.csproj",
         "packagesPath": "C:\\Users\\PC1\\.nuget\\packages\\",
-        "outputPath": "D:\\QuickMarket\\BussinessLogic\\obj\\",
+        "outputPath": "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\BussinessLogic\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\PC1\\AppData\\Roaming\\NuGet\\NuGet.Config",

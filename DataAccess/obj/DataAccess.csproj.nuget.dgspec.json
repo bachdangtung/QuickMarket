@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\QuickMarket\\DataAccess\\DataAccess.csproj": {}
+    "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\DataAccess\\DataAccess.csproj": {}
   },
   "projects": {
-    "D:\\QuickMarket\\DataAccess\\DataAccess.csproj": {
+    "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\DataAccess\\DataAccess.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\QuickMarket\\DataAccess\\DataAccess.csproj",
+        "projectUniqueName": "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\DataAccess\\DataAccess.csproj",
         "projectName": "DataAccess",
-        "projectPath": "D:\\QuickMarket\\DataAccess\\DataAccess.csproj",
+        "projectPath": "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\DataAccess\\DataAccess.csproj",
         "packagesPath": "C:\\Users\\PC1\\.nuget\\packages\\",
-        "outputPath": "D:\\QuickMarket\\DataAccess\\obj\\",
+        "outputPath": "C:\\Users\\PC1\\Documents\\GitHub\\QuickMarket\\DataAccess\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\PC1\\AppData\\Roaming\\NuGet\\NuGet.Config",

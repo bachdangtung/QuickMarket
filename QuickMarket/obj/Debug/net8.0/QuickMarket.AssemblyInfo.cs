@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QuickMarket")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+070b22d7b2a4651a5e1ef81f5e957162ca7208bf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c3f81260701f603e62cb2ec6abbf35d22fc430d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("QuickMarket")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QuickMarket")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
