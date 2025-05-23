@@ -1,36 +1,29 @@
-.vs/QuickMarket/FileContentIndex/a49036fa-8a8f-4b42-a282-5a12864fba14.vsidx
-.vs/QuickMarket/v17/DocumentLayout.json
-.vs/QuickMarket/v17/.suo
-QuickMarket/obj/QuickMarket.csproj.nuget.dgspec.json
-QuickMarket/obj/project.nuget.cache
-QuickMarket/obj/project.assets.json
-QuickMarket/obj/Debug/net8.0/QuickMarket.GeneratedMSBuildEditorConfig.editorconfig
-QuickMarket/obj/Debug/net8.0/QuickMarket.assets.cache
-QuickMarket/obj/Debug/net8.0/QuickMarket.AssemblyInfoInputs.cache
-QuickMarket/obj/Debug/net8.0/QuickMarket.AssemblyInfo.cs
-DataAccess/obj/project.nuget.cache
-DataAccess/obj/project.assets.json
-DataAccess/obj/Debug/net8.0/DataAccess.GeneratedMSBuildEditorConfig.editorconfig
-DataAccess/obj/Debug/net8.0/DataAccess.assets.cache
-DataAccess/obj/Debug/net8.0/DataAccess.AssemblyInfoInputs.cache
-DataAccess/obj/Debug/net8.0/DataAccess.AssemblyInfo.cs
-DataAccess/obj/DataAccess.csproj.nuget.dgspec.json
-BussinessLogic/obj/project.nuget.cache
-BussinessLogic/obj/project.assets.json
-BussinessLogic/obj/Debug/net8.0/BussinessLogic.GeneratedMSBuildEditorConfig.editorconfig
-BussinessLogic/obj/Debug/net8.0/BussinessLogic.assets.cache
-BussinessLogic/obj/Debug/net8.0/BussinessLogic.AssemblyInfoInputs.cache
-BussinessLogic/obj/Debug/net8.0/BussinessLogic.AssemblyInfo.cs
-BussinessLogic/obj/BussinessLogic.csproj.nuget.dgspec.json
-.vs/QuickMarket/FileContentIndex/efe24f4d-df68-437e-99d1-e3c182b5bb3d.vsidx
-.vs/QuickMarket/FileContentIndex/c40743c3-3dbe-43e4-be91-3f53ca505f46.vsidx
-.vs/QuickMarket/FileContentIndex/c3158b0e-f437-4253-a3b8-b1829a5fc55d.vsidx
-.vs/QuickMarket/FileContentIndex/9a90745c-fe53-4101-ad8b-a803d84e89f7.vsidx
-.vs/QuickMarket/FileContentIndex/854a170e-f823-4b36-b946-4f737bd1dfa3.vsidx
-.vs/QuickMarket/FileContentIndex/6d74a530-b6c3-41e5-8cc9-3dc74788eee1.vsidx
-.vs/QuickMarket/FileContentIndex/64c9a1d1-e8ef-423b-820b-a6a661bc8897.vsidx
-.vs/QuickMarket/FileContentIndex/1c4fda79-b592-41f7-9809-c193ab70a529.vsidx
-.vs/QuickMarket/FileContentIndex/f0132d74-73d1-47cf-b439-27551765f2b5.vsidx
-.vs/QuickMarket/FileContentIndex/a8c539c1-b2ac-4029-a5ba-37fa1cf107d3.vsidx
-.vs/QuickMarket/FileContentIndex/5eb98ca0-2185-4088-8528-64ddc2527b87.vsidx
-.vs/QuickMarket/FileContentIndex/a0a7c834-9687-47d0-96de-9e92c7232157.vsidx
+# Thư mục mặc định của Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Kết quả build
+bin/
+obj/
+
+# Các file tạm của NuGet
+*.nuget.dgspec.json
+project.assets.json
+project.nuget.cache
+
+# Các file log và tạm
+*.log
+*.cache
+*.tmp
+*.bak
+
+# Các file cấu hình IDE tự sinh
+*.vscode/
+*.editorconfig
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db
