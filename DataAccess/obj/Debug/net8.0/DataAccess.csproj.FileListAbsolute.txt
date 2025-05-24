@@ -10,3 +10,6 @@ C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\obj\Debug\net8.0\DataAccess
 C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\obj\Debug\net8.0\refint\DataAccess.dll
 C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\obj\Debug\net8.0\DataAccess.pdb
 C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\obj\Debug\net8.0\ref\DataAccess.dll
+C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\bin\Debug\net8.0\DataAccess.runtimeconfig.json
+C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\obj\Debug\net8.0\DataAccess.csproj.AssemblyReference.cache
+C:\Users\PC1\Documents\GitHub\QuickMarket\DataAccess\obj\Debug\net8.0\DataAccess.genruntimeconfig.cache

@@ -1,29 +1,61 @@
-# Thư mục mặc định của Visual Studio
+######################
+# Visual Studio
+######################
 .vs/
-*.suo
 *.user
+*.suo
 *.userosscache
 *.sln.docstates
 
-# Kết quả build
+######################
+# Build outputs
+######################
 bin/
 obj/
 
-# Các file tạm của NuGet
+######################
+# NuGet
+######################
 *.nuget.dgspec.json
 project.assets.json
 project.nuget.cache
+*.nupkg
 
-# Các file log và tạm
+######################
+# Logs, temp & backup
+######################
 *.log
-*.cache
 *.tmp
 *.bak
+*.cache
 
-# Các file cấu hình IDE tự sinh
-*.vscode/
+######################
+# IDE & editor config
+######################
+.vscode/
 *.editorconfig
 
-# Hệ điều hành
+######################
+# OS-specific files
+######################
 .DS_Store
 Thumbs.db
+
+######################
+# Project-specific ignores
+######################
+
+# QuickMarket
+QuickMarket/appsettings.json
+QuickMarket/bin/
+QuickMarket/obj/
+
+# DataAccess
+DataAccess/bin/
+DataAccess/obj/
+DataAccess/Class1.cs
+
+# BussinessLogic
+BussinessLogic/bin/
+BussinessLogic/obj/
+BussinessLogic/Class1.cs
