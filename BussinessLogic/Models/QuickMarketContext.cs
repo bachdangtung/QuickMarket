@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace DataAccess.Models;
+namespace BussinessLogic.Models;
 
 public partial class QuickMarketContext : DbContext
 {
@@ -40,18 +40,24 @@ public partial class QuickMarketContext : DbContext
 
     public virtual DbSet<Wallet> Wallets { get; set; }
 
+    private string GetConnectionString()
+    {
+        IConfiguration configuration = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", true, true).Build();
+        return configuration["ConnectionStrings:QuickMarket"];
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
         {
-            var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-            string ConnectionStr = config.GetConnectionString("DB");
+            optionsBuilder.UseSqlServer(GetConnectionString());
 
-            optionsBuilder.UseSqlServer(ConnectionStr);
         }
     }
 
-protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Favorite>(entity =>
         {
