@@ -17,7 +17,7 @@ public partial class User
 
     public DateTime? LastLogin { get; set; }
 
-    public int RoldeId { get; set; }
+    public int RoleId { get; set; }
 
     public string? Status { get; set; }
 
@@ -33,7 +33,7 @@ public partial class User
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 
-    public virtual Role Rolde { get; set; } = null!;
+    public virtual Role Role { get; set; } = null!;
 
     public virtual ICollection<Transaction> TransactionBuyers { get; set; } = new List<Transaction>();
 

@@ -255,14 +255,14 @@ public partial class QuickMarketContext : DbContext
             entity.Property(e => e.PasswordHash)
                 .HasMaxLength(255)
                 .IsUnicode(false);
-            entity.Property(e => e.RoldeId).HasColumnName("RoldeID");
+            entity.Property(e => e.RoleId).HasColumnName("RoleID");
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.Username)
                 .HasMaxLength(255)
                 .IsUnicode(false);
 
-            entity.HasOne(d => d.Rolde).WithMany(p => p.Users)
-                .HasForeignKey(d => d.RoldeId)
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Users_Role");
         });
