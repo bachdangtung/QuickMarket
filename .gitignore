@@ -1,63 +1,72 @@
-######################
-# Visual Studio
-######################
-.vs/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
+#############################
+# .NET build & runtime files
+#############################
 
-######################
-# Build outputs
-######################
 bin/
 obj/
-
-######################
-# NuGet
-######################
-*.nuget.dgspec.json
-project.assets.json
-project.nuget.cache
-*.nupkg
-
-######################
-# Logs, temp & backup
-######################
-*.log
-*.tmp
-*.bak
+*.dll
+*.exe
+*.pdb
 *.cache
+*.log
+*.db
+*.db-shm
+*.db-wal
 
-######################
-# IDE & editor config
-######################
-.vscode/
-*.editorconfig
+##################################
+# User secrets & environment files
+##################################
 
-######################
-# OS-specific files
-######################
+*.user
+*.suo
+*.vs/
+*.vscode/
+
+# ASP.NET Core config files
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
+appsettings.Local.json
+*.runtimeconfig.json
+*.staticwebassets.runtime.json
+*.staticwebassets.build.json
+*.staticwebassets.pack.json
+
+####################
+# NuGet + MSBuild
+####################
+project.lock.json
+project.nuget.cache
+project.assets.json
+*.nuget.props
+*.nuget.targets
+*.nupkg
+*.snupkg
+packages/
+
+#####################
+# Razor build output
+#####################
+
+**/scopedcss/
+**/ref/
+**/refint/
+**/*.g.cs
+**/*.g.i.cs
+**/*.bundle.scp.css
+**/*.rz.scp.css
+
+##################
+# OS generated
+##################
+
 .DS_Store
 Thumbs.db
 
-######################
-# Project-specific ignores
-######################
+##################
+# IDE Settings
+##################
 
-# QuickMarket
-QuickMarket/appsettings.json
-QuickMarket/bin/
-QuickMarket/obj/
-
-# DataAccess
-DataAccess/bin/
-DataAccess/obj/
-DataAccess/Class1.cs
-
-# BussinessLogic
-BussinessLogic/bin/
-BussinessLogic/obj/
-BussinessLogic/Class1.cs
-BussinessLogic/obj/Debug/net8.0/BussinessLogic.AssemblyInfoInputs.cache
-BussinessLogic/obj/Debug/net8.0/BussinessLogic.AssemblyInfo.cs
+.idea/
+.vscode/
+*.sln.docstates
