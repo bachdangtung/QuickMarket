@@ -43,6 +43,12 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
     options.CallbackPath = "/signin-google";
     options.SaveTokens = true;
+    options.Events.OnRemoteFailure = context =>
+    {
+        context.Response.Redirect("/Account/Login");
+        context.HandleResponse(); // Ngãn ASP.NET ném exception
+        return Task.CompletedTask;
+    };
 });
 
 var app = builder.Build();
