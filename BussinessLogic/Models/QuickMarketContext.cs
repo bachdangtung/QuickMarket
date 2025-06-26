@@ -16,6 +16,8 @@ public partial class QuickMarketContext : DbContext
     {
     }
 
+    public virtual DbSet<ExternalLogin> ExternalLogins { get; set; }
+
     public virtual DbSet<Favorite> Favorites { get; set; }
 
     public virtual DbSet<FinancialTransaction> FinancialTransactions { get; set; }
@@ -59,6 +61,26 @@ public partial class QuickMarketContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ExternalLogin>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__External__3214EC271CF1FDA3");
+
+            entity.ToTable("ExternalLogin");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.DateCreated)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Provider).HasMaxLength(100);
+            entity.Property(e => e.ProviderKey).HasMaxLength(200);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ExternalLogins)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ExternalLogin_User");
+        });
+
         modelBuilder.Entity<Favorite>(entity =>
         {
             entity.HasKey(e => new { e.UserId, e.ProductId });

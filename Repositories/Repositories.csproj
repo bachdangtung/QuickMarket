@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BussinessLogic\BussinessLogic.csproj" />
-    <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
   </ItemGroup>
 
 </Project>

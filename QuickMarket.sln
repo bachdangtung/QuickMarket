@@ -3,15 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccess", "DataAccess\DataAccess.csproj", "{CCD4D0F4-EACF-4DEE-858A-C0480E72A6F3}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BussinessLogic", "BussinessLogic\BussinessLogic.csproj", "{87558641-9D54-438F-84E8-9BAFB6B46F71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repositories", "Repositories\Repositories.csproj", "{FDF2AA70-3430-4EF3-995B-C4BEE70AC4AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Repositories", "Repositories\Repositories.csproj", "{FDF2AA70-3430-4EF3-995B-C4BEE70AC4AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "Services\Services.csproj", "{0B141D5B-8A67-46E6-ACB6-F06F057B2D67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "Services\Services.csproj", "{0B141D5B-8A67-46E6-ACB6-F06F057B2D67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickMarket", "QuickMarket\QuickMarket.csproj", "{3909C2F0-F4DA-4801-B23D-D54C19725AFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickMarket", "QuickMarket\QuickMarket.csproj", "{3909C2F0-F4DA-4801-B23D-D54C19725AFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CCD4D0F4-EACF-4DEE-858A-C0480E72A6F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CCD4D0F4-EACF-4DEE-858A-C0480E72A6F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CCD4D0F4-EACF-4DEE-858A-C0480E72A6F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CCD4D0F4-EACF-4DEE-858A-C0480E72A6F3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{87558641-9D54-438F-84E8-9BAFB6B46F71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{87558641-9D54-438F-84E8-9BAFB6B46F71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87558641-9D54-438F-84E8-9BAFB6B46F71}.Release|Any CPU.ActiveCfg = Release|Any CPU
