@@ -20,6 +20,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Add Authentication
 builder.Services.AddAuthentication(options =>

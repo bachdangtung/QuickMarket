@@ -65,5 +65,58 @@ namespace Repositories.Implementations
                     el.ProviderKey == providerKey))
                 .FirstOrDefaultAsync();
         }
+        
+        public async Task<bool> CreatePasswordResetTokenAsync(int userId, string token, TimeSpan expiry)
+        {
+            var resetToken = new PasswordResetToken
+            {
+                UserId = userId,
+                Token = token,
+                ExpiryDate = DateTime.UtcNow.Add(expiry),
+                CreatedDate = DateTime.UtcNow,
+                IsUsed = false
+            };
+            
+            _context.PasswordResetTokens.Add(resetToken);
+            var result = await _context.SaveChangesAsync();
+            return result > 0;
+        }
+        
+        public async Task<PasswordResetToken?> GetPasswordResetTokenAsync(string token)
+        {
+            return await _context.PasswordResetTokens
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Token == token && !t.IsUsed && t.ExpiryDate > DateTime.UtcNow);
+        }
+        
+        public async Task<bool> MarkTokenAsUsedAsync(string token)
+        {
+            var resetToken = await _context.PasswordResetTokens
+                .FirstOrDefaultAsync(t => t.Token == token);
+                
+            if (resetToken == null)
+            {
+                return false;
+            }
+            
+            resetToken.IsUsed = true;
+            _context.PasswordResetTokens.Update(resetToken);
+            var result = await _context.SaveChangesAsync();
+            return result > 0;
+        }
+        
+        public async Task<bool> UpdateUserPasswordAsync(int userId, string newPasswordHash)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+            
+            user.PasswordHash = newPasswordHash;
+            _context.Users.Update(user);
+            var result = await _context.SaveChangesAsync();
+            return result > 0;
+        }
     }
 }

@@ -9,10 +9,12 @@ namespace Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
-
-        public AuthService(IUserRepository userRepository)
+        private readonly IEmailService? _emailService;
+        
+        public AuthService(IUserRepository userRepository, IEmailService? emailService = null)
         {
             _userRepository = userRepository;
+            _emailService = emailService;
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
@@ -143,6 +145,79 @@ namespace Services.Implementations
                 }
                 return builder.ToString();
             }
+        }
+        
+        // Password Reset Methods
+        
+        public async Task<string> GeneratePasswordResetTokenAsync(string email)
+        {
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            if (user == null)
+                return string.Empty;
+            
+            // Generate a unique token
+            string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            token = token.Replace("/", "_").Replace("+", "-").Replace("=", "");
+            
+            // Store the token with a 24 hour expiry
+            bool created = await _userRepository.CreatePasswordResetTokenAsync(
+                user.UserId, token, TimeSpan.FromHours(24));
+                
+            return created ? token : string.Empty;
+        }
+        
+        public async Task<bool> ValidatePasswordResetTokenAsync(string email, string token)
+        {
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            if (user == null)
+                return false;
+                
+            var resetToken = await _userRepository.GetPasswordResetTokenAsync(token);
+            if (resetToken == null || resetToken.UserId != user.UserId)
+                return false;
+                
+            return true;
+        }
+        
+        public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
+        {
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            if (user == null)
+                return false;
+                
+            var resetToken = await _userRepository.GetPasswordResetTokenAsync(token);
+            if (resetToken == null || resetToken.UserId != user.UserId)
+                return false;
+                
+            // Mark token as used
+            await _userRepository.MarkTokenAsUsedAsync(token);
+            
+            // Update the password
+            string newPasswordHash = HashPassword(newPassword);
+            return await _userRepository.UpdateUserPasswordAsync(user.UserId, newPasswordHash);
+        }
+        
+        public async Task<bool> SendPasswordResetEmailAsync(string email, string callbackUrl)
+        {
+            if (_emailService == null)
+                return false;
+                
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            if (user == null)
+                return false;
+                
+            string subject = "Reset Your QuickMarket Password";
+            
+            string body = $@"
+            <h2>QuickMarket Password Reset</h2>
+            <p>Hello {user.Username},</p>
+            <p>You requested to reset your password. Please click the link below to reset it:</p>
+            <p><a href='{callbackUrl}'>Reset Password</a></p>
+            <p>If you didn't request this, you can safely ignore this email.</p>
+            <p>This link will expire in 24 hours.</p>
+            <p>Thank you,<br/>QuickMarket Team</p>";
+            
+            return await _emailService.SendEmailAsync(email, subject, body);
         }
     }
 }

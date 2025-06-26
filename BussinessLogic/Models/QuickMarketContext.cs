@@ -24,6 +24,8 @@ public partial class QuickMarketContext : DbContext
 
     public virtual DbSet<Message> Messages { get; set; }
 
+    public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<ProductCategory> ProductCategories { get; set; }
@@ -143,6 +145,26 @@ public partial class QuickMarketContext : DbContext
                 .HasForeignKey(d => d.ToUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Messages_Users1");
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Password__3214EC270C874687");
+
+            entity.ToTable("PasswordResetToken");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ExpiryDate).HasColumnType("datetime");
+            entity.Property(e => e.Token).HasMaxLength(255);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.PasswordResetTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PasswordResetToken_User");
         });
 
         modelBuilder.Entity<Product>(entity =>

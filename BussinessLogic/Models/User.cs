@@ -31,6 +31,8 @@ public partial class User
 
     public virtual ICollection<Message> MessageToUsers { get; set; } = new List<Message>();
 
+    public virtual ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
+
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();

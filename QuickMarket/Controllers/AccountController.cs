@@ -1,4 +1,3 @@
-using BussinessLogic.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -117,6 +116,102 @@ namespace QuickMarket.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            
+            // Check if user exists
+            var user = await _authService.GetUserByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                ViewData["SuccessMessage"] = "If your email is registered, we've sent a password reset link.";
+                return View();
+            }
+            
+            // Generate reset token
+            var token = await _authService.GeneratePasswordResetTokenAsync(model.Email);
+            if (string.IsNullOrEmpty(token))
+            {
+                // Something went wrong, but don't reveal it
+                ViewData["SuccessMessage"] = "If your email is registered, we've sent a password reset link.";
+                return View();
+            }
+            
+            // Generate callback URL
+            var callbackUrl = Url.Action("ResetPassword", "Account", 
+                new { email = model.Email, token = token }, 
+                protocol: HttpContext.Request.Scheme);
+            
+            // Send email
+            await _authService.SendPasswordResetEmailAsync(model.Email, callbackUrl);
+            
+            ViewData["SuccessMessage"] = "If your email is registered, we've sent a password reset link.";
+            return View();
+        }
+        
+        [HttpGet]
+        public IActionResult ResetPassword(string email, string token)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction("Login");
+            }
+            
+            var model = new ResetPasswordViewModel
+            {
+                Email = email,
+                Token = token
+            };
+            
+            return View(model);
+        }
+        
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            
+            // Validate token
+            var isValidToken = await _authService.ValidatePasswordResetTokenAsync(model.Email, model.Token);
+            if (!isValidToken)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid or expired password reset token.");
+                return View(model);
+            }
+            
+            // Reset password
+            var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.Password);
+            if (!result)
+            {
+                ModelState.AddModelError(string.Empty, "Error resetting password.");
+                return View(model);
+            }
+            
+            return RedirectToAction("ResetPasswordConfirmation");
+        }
+        
+        [HttpGet]
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
+        }
+        
         [HttpGet]
         public IActionResult AccessDenied()
         {
