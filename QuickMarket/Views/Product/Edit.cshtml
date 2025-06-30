@@ -1,0 +1,114 @@
+@model QuickMarket.Models.ProductViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Edit" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="ProductId" />
+                <input type="hidden" asp-for="UserId" />
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="form-label"></label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="">-- Chọn danh mục --</option>
+                        @foreach (var category in ViewBag.Categories)
+                        {
+                            <option value="@category.CategoryId">@category.CategoryName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Price" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="Price" class="form-control" />
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Active">Đang hoạt động</option>
+                        <option value="Inactive">Tạm ngưng</option>
+                        <option value="Sold">Đã bán</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                @if (Model.ExistingImageUrls != null && Model.ExistingImageUrls.Any())
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Hình ảnh hiện tại</label>
+                        <div class="row">
+                            @foreach (var imageUrl in Model.ExistingImageUrls)
+                            {
+                                <div class="col-md-3 mb-2">
+                                    <div class="card">
+                                        <img src="@imageUrl" class="card-img-top" style="height: 150px; object-fit: cover;" />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Thêm hình ảnh mới</label>
+                    <input type="file" name="ImageFiles" class="form-control" multiple accept="image/*" />
+                    <small class="text-muted">Có thể chọn nhiều hình ảnh. Tối đa 5 hình.</small>
+                </div>
+
+                <div class="mb-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Lưu thay đổi
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Hướng dẫn</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>Vui lòng nhập đầy đủ thông tin sản phẩm.</li>
+                        <li>Hình ảnh mới sẽ được thêm vào cùng với những hình ảnh hiện tại.</li>
+                        <li>Thay đổi trạng thái sản phẩm sang "Đã bán" khi sản phẩm đã được bán.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

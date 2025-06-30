@@ -17,6 +17,8 @@ public partial class ProductReview
 
     public int? ThreadId { get; set; }
 
+    public byte? Rating { get; set; }
+
     public virtual ICollection<ProductReview> InverseThread { get; set; } = new List<ProductReview>();
 
     public virtual Product? Product { get; set; }

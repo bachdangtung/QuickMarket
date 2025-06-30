@@ -1,0 +1,85 @@
+@model QuickMarket.Models.ProductViewModel
+
+@{
+    ViewData["Title"] = "Thêm sản phẩm mới";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Create" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="form-label"></label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="">-- Chọn danh mục --</option>
+                        @foreach (var category in ViewBag.Categories)
+                        {
+                            <option value="@category.CategoryId">@category.CategoryName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Price" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="Price" class="form-control" />
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hình ảnh sản phẩm</label>
+                    <input type="file" name="ImageFiles" class="form-control" multiple accept="image/*" />
+                    <small class="text-muted">Có thể chọn nhiều hình ảnh. Tối đa 5 hình.</small>
+                </div>
+
+                <div class="mb-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Lưu sản phẩm
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Hướng dẫn</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>Vui lòng nhập đầy đủ thông tin sản phẩm.</li>
+                        <li>Hình ảnh nên có kích thước vừa phải và rõ ràng.</li>
+                        <li>Mô tả chi tiết sẽ giúp sản phẩm của bạn dễ dàng được tìm thấy và đánh giá cao hơn.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

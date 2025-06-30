@@ -1,0 +1,62 @@
+@model QuickMarket.Models.ProductViewModel
+
+@{
+    ViewData["Title"] = "Xóa sản phẩm";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="alert alert-danger my-4">
+        <h4>Bạn có chắc chắn muốn xóa sản phẩm này?</h4>
+        <p>Thao tác này không thể hoàn tác.</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    @if (Model.ExistingImageUrls != null && Model.ExistingImageUrls.Any())
+                    {
+                        <img src="@Model.ExistingImageUrls.First()" class="img-fluid" alt="@Model.Name">
+                    }
+                    else
+                    {
+                        <img src="/images/no-image.png" class="img-fluid" alt="Không có hình ảnh">
+                    }
+                </div>
+                <div class="col-md-8">
+                    <h2>@Model.Name</h2>
+                    <p class="text-danger h4">@Model.Price.ToString("N0") VNĐ</p>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-3">Danh mục</dt>
+                        <dd class="col-sm-9">@Model.CategoryName</dd>
+
+                        <dt class="col-sm-3">Trạng thái</dt>
+                        <dd class="col-sm-9">@Model.Status</dd>
+
+                        <dt class="col-sm-3">Ngày đăng</dt>
+                        <dd class="col-sm-9">@Model.DatePosted.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                        <dt class="col-sm-3">Người bán</dt>
+                        <dd class="col-sm-9">@Model.SellerName</dd>
+
+                        <dt class="col-sm-3">Mô tả</dt>
+                        <dd class="col-sm-9">@(Model.Description ?? "Không có mô tả")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Delete" class="mb-4">
+        <input type="hidden" asp-for="ProductId" />
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Xác nhận xóa
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </form>
+</div>

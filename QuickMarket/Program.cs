@@ -17,10 +17,13 @@ builder.Services.AddDbContext<QuickMarketContext>(options =>
 
 // Add Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // Add Authentication
 builder.Services.AddAuthentication(options =>
@@ -46,7 +49,7 @@ builder.Services.AddAuthentication(options =>
     options.Events.OnRemoteFailure = context =>
     {
         context.Response.Redirect("/Account/Login");
-        context.HandleResponse(); // Ngãn ASP.NET ném exception
+        context.HandleResponse(); // Ngï¿½n ASP.NET nï¿½m exception
         return Task.CompletedTask;
     };
 });
@@ -67,6 +70,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Product}/{action=Index}/{id?}");
 
 app.Run();
