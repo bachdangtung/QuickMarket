@@ -21,43 +21,21 @@ namespace QuickMarket.Controllers
         {
             var pageSize = 12; // Số sản phẩm trên mỗi trang
             
-            var allProducts = await _productService.GetAllProductsAsync();
-            var filteredProducts = allProducts.AsQueryable();
-
-            // Lọc theo từ khóa tìm kiếm
-            if (!string.IsNullOrEmpty(searchQuery))
+            // Tạo DTO chứa các tham số lọc và phân trang
+            var filter = new ProductFilterDto
             {
-                filteredProducts = filteredProducts.Where(p => 
-                    p.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || 
-                    (p.Description != null && p.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
-            }
-
-            // Lọc theo danh mục
-            if (categoryId.HasValue && categoryId > 0)
-            {
-                filteredProducts = filteredProducts.Where(p => p.CategoryId == categoryId);
-            }
-
-            // Sắp xếp
-            filteredProducts = sortOrder switch
-            {
-                "price_asc" => filteredProducts.OrderBy(p => p.Price),
-                "price_desc" => filteredProducts.OrderByDescending(p => p.Price),
-                "newest" => filteredProducts.OrderByDescending(p => p.DatePosted),
-                _ => filteredProducts.OrderByDescending(p => p.DatePosted), // Mặc định sắp xếp theo ngày đăng, mới nhất lên đầu
+                SearchQuery = searchQuery,
+                CategoryId = categoryId,
+                SortOrder = sortOrder,
+                Page = page,
+                PageSize = pageSize
             };
-
-            // Phân trang
-            var totalItems = filteredProducts.Count();
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
             
-            var pagedProducts = filteredProducts
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
+            // Gọi service để lọc, sắp xếp và phân trang ngay từ database
+            var pagedResult = await _productService.GetFilteredProductsAsync(filter);
+            
             // Chuyển đổi sang ViewModel
-            var productViewModels = pagedProducts.Select(p => new ProductViewModel
+            var productViewModels = pagedResult.Items.Select(p => new ProductViewModel
             {
                 ProductId = p.ProductId,
                 Name = p.Name,
@@ -81,8 +59,8 @@ namespace QuickMarket.Controllers
                 SearchQuery = searchQuery,
                 CategoryFilter = categoryId,
                 SortOrder = sortOrder,
-                CurrentPage = page,
-                TotalPages = totalPages
+                CurrentPage = pagedResult.CurrentPage,
+                TotalPages = pagedResult.PageCount
             };
 
             return View(viewModel);
@@ -338,46 +316,21 @@ namespace QuickMarket.Controllers
         {
             var pageSize = 20; // Hiển thị nhiều sản phẩm hơn trong chế độ quản lý
             
-            var allProducts = await _productService.GetAllProductsAsync();
-            var filteredProducts = allProducts.AsQueryable();
-
-            // Lọc theo từ khóa tìm kiếm
-            if (!string.IsNullOrEmpty(searchQuery))
+            // Tạo DTO chứa các tham số lọc và phân trang
+            var filter = new ProductFilterDto
             {
-                filteredProducts = filteredProducts.Where(p => 
-                    p.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || 
-                    (p.Description != null && p.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
-            }
-
-            // Lọc theo danh mục
-            if (categoryId.HasValue && categoryId > 0)
-            {
-                filteredProducts = filteredProducts.Where(p => p.CategoryId == categoryId);
-            }
-
-            // Sắp xếp
-            filteredProducts = sortOrder switch
-            {
-                "name_asc" => filteredProducts.OrderBy(p => p.Name),
-                "name_desc" => filteredProducts.OrderByDescending(p => p.Name),
-                "price_asc" => filteredProducts.OrderBy(p => p.Price),
-                "price_desc" => filteredProducts.OrderByDescending(p => p.Price),
-                "newest" => filteredProducts.OrderByDescending(p => p.DatePosted),
-                "oldest" => filteredProducts.OrderBy(p => p.DatePosted),
-                _ => filteredProducts.OrderByDescending(p => p.DatePosted), // Mặc định sắp xếp theo ngày đăng, mới nhất lên đầu
+                SearchQuery = searchQuery,
+                CategoryId = categoryId,
+                SortOrder = sortOrder,
+                Page = page,
+                PageSize = pageSize
             };
-
-            // Phân trang
-            var totalItems = filteredProducts.Count();
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
             
-            var pagedProducts = filteredProducts
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
+            // Gọi service để lọc, sắp xếp và phân trang ngay từ database
+            var pagedResult = await _productService.GetFilteredProductsAsync(filter);
+            
             // Chuyển đổi sang ViewModel
-            var productViewModels = pagedProducts.Select(p => new ProductViewModel
+            var productViewModels = pagedResult.Items.Select(p => new ProductViewModel
             {
                 ProductId = p.ProductId,
                 Name = p.Name,
@@ -401,8 +354,8 @@ namespace QuickMarket.Controllers
                 SearchQuery = searchQuery,
                 CategoryFilter = categoryId,
                 SortOrder = sortOrder,
-                CurrentPage = page,
-                TotalPages = totalPages
+                CurrentPage = pagedResult.CurrentPage,
+                TotalPages = pagedResult.PageCount
             };
 
             return View(viewModel);
@@ -410,12 +363,15 @@ namespace QuickMarket.Controllers
 
         // GET: Product/MyProducts
         [Authorize]
-        public async Task<IActionResult> MyProducts()
+        public async Task<IActionResult> MyProducts(int page = 1)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var products = await _productService.GetProductsByUserAsync(userId);
+            var pageSize = 10; // Số sản phẩm trên mỗi trang
             
-            var productViewModels = products.Select(p => new ProductViewModel
+            // Sử dụng phiên bản có phân trang
+            var pagedResult = await _productService.GetProductsByUserPagedAsync(userId, page, pageSize);
+            
+            var productViewModels = pagedResult.Items.Select(p => new ProductViewModel
             {
                 ProductId = p.ProductId,
                 Name = p.Name,
@@ -428,7 +384,15 @@ namespace QuickMarket.Controllers
                 ExistingImageUrls = p.ProductImages.Select(img => img.ImageUrl).ToList()
             }).ToList();
             
-            return View(productViewModels);
+            // Tạo một viewModel để bao gồm thông tin phân trang
+            var viewModel = new ProductListViewModel
+            {
+                Products = productViewModels,
+                CurrentPage = pagedResult.CurrentPage,
+                TotalPages = pagedResult.PageCount
+            };
+            
+            return View(viewModel);
         }
 
         // POST: Product/AddReview

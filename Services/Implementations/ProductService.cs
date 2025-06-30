@@ -21,6 +21,12 @@ namespace Services.Implementations
             return await _productRepository.GetAllProductsAsync();
         }
 
+        public async Task<PagedResult<Product>> GetFilteredProductsAsync(ProductFilterDto filter)
+        {
+            // Có thể thêm logic xử lý bổ sung ở đây trước khi gọi Repository
+            return await _productRepository.GetFilteredProductsAsync(filter);
+        }
+
         public async Task<Product?> GetProductByIdAsync(int productId)
         {
             return await _productRepository.GetProductByIdAsync(productId);
@@ -34,6 +40,11 @@ namespace Services.Implementations
         public async Task<List<Product>> GetProductsByUserAsync(int userId)
         {
             return await _productRepository.GetProductsByUserAsync(userId);
+        }
+
+        public async Task<PagedResult<Product>> GetProductsByUserPagedAsync(int userId, int page, int pageSize)
+        {
+            return await _productRepository.GetProductsByUserPagedAsync(userId, page, pageSize);
         }
 
         public async Task<bool> CreateProductAsync(Product product)
