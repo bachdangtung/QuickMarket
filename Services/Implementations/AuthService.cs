@@ -1,3 +1,5 @@
+using AutoMapper;
+using BussinessLogic.DTOs.Users;
 using BussinessLogic.Models;
 using Repositories.Interfaces;
 using Services.Interfaces;
@@ -10,16 +12,19 @@ namespace Services.Implementations
     {
         private readonly IUserRepository _userRepository;
         private readonly IEmailService? _emailService;
+        private readonly IMapper _mapper;
         
-        public AuthService(IUserRepository userRepository, IEmailService? emailService = null)
+        public AuthService(IUserRepository userRepository, IMapper mapper, IEmailService? emailService = null)
         {
             _userRepository = userRepository;
             _emailService = emailService;
+            _mapper = mapper;
         }
 
-        public async Task<User?> GetUserByEmailAsync(string email)
+        public async Task<UserDto?> GetUserByEmailAsync(string email)
         {
-            return await _userRepository.GetUserByEmailAsync(email);
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
         public async Task<bool> RegisterUserAsync(string username, string email, string password)
@@ -125,9 +130,10 @@ namespace Services.Implementations
             return await _userRepository.AddExternalLoginAsync(createdUser.UserId, provider, providerKey);
         }
         
-        public async Task<User?> FindUserByExternalLoginAsync(string provider, string providerKey)
+        public async Task<UserDto?> FindUserByExternalLoginAsync(string provider, string providerKey)
         {
-            return await _userRepository.FindUserByExternalLoginAsync(provider, providerKey);
+            var user = await _userRepository.FindUserByExternalLoginAsync(provider, providerKey);
+            return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
         private string HashPassword(string password)

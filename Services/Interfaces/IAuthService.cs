@@ -1,4 +1,4 @@
-using BussinessLogic.Models;
+using BussinessLogic.DTOs.Users;
 
 namespace Services.Interfaces
 {
@@ -6,10 +6,10 @@ namespace Services.Interfaces
     {
         Task<bool> ValidateUserAsync(string email, string password);
         Task<bool> RegisterUserAsync(string username, string email, string password);
-        Task<User?> GetUserByEmailAsync(string email);
+        Task<UserDto?> GetUserByEmailAsync(string email);
         Task UpdateLastLoginAsync(string email);
         Task<bool> ExternalLoginUserAsync(string email, string username, string provider, string providerKey);
-        Task<User?> FindUserByExternalLoginAsync(string provider, string providerKey);
+        Task<UserDto?> FindUserByExternalLoginAsync(string provider, string providerKey);
         
         // Password Reset Methods
         Task<string> GeneratePasswordResetTokenAsync(string email);

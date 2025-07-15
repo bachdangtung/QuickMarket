@@ -1,3 +1,4 @@
+using BussinessLogic.DTOs.Categories;
 using BussinessLogic.Models;
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
@@ -61,11 +62,11 @@ namespace QuickMarket.Models
     public class ProductListViewModel
     {
         public List<ProductViewModel> Products { get; set; } = new List<ProductViewModel>();
-        public List<ProductCategory> Categories { get; set; } = new List<ProductCategory>();
+        public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
         public string? SearchQuery { get; set; }
         public int? CategoryFilter { get; set; }
         public string? SortOrder { get; set; }
         public int CurrentPage { get; set; } = 1;
-        public int TotalPages { get; set; }
+        public int TotalPages { get; set; } 
     }
 }

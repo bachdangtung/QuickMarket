@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BussinessLogic.Models
+namespace BussinessLogic.DTOs
 {
     public class ProductFilterDto
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BussinessLogic.Models
+namespace BussinessLogic.DTOs
 {
     public class PagedResult<T>
     {

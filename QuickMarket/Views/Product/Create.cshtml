@@ -25,7 +25,7 @@
                         <option value="">-- Chọn danh mục --</option>
                         @foreach (var category in ViewBag.Categories)
                         {
-                            <option value="@category.CategoryId">@category.CategoryName</option>
+                            <option value="@category.CategoryId">@category.CategoryName</option>    
                         }
                     </select>
                     <span asp-validation-for="CategoryId" class="text-danger"></span>

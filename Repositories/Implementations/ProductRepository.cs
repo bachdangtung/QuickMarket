@@ -1,3 +1,4 @@
+using BussinessLogic.DTOs;
 using BussinessLogic.Models;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
@@ -200,6 +201,13 @@ namespace Repositories.Implementations
         public async Task<ProductCategory?> GetCategoryByIdAsync(int categoryId)
         {
             return await _context.ProductCategories.FindAsync(categoryId);
+        }
+        
+        public async Task<ProductImage?> GetProductImageByIdAsync(int imageId)
+        {
+            return await _context.ProductImages
+                .Include(pi => pi.Product)
+                .FirstOrDefaultAsync(pi => pi.ImageId == imageId);
         }
     }
 }

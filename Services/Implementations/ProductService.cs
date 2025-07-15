@@ -1,3 +1,7 @@
+using AutoMapper;
+using BussinessLogic.DTOs;
+using BussinessLogic.DTOs.Categories;
+using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
 using Microsoft.AspNetCore.Http;
 using Repositories.Interfaces;
@@ -9,46 +13,78 @@ namespace Services.Implementations
     {
         private readonly IProductRepository _productRepository;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IMapper _mapper;
 
-        public ProductService(IProductRepository productRepository, ICloudinaryService cloudinaryService)
+        public ProductService(IProductRepository productRepository, ICloudinaryService cloudinaryService, IMapper mapper)
         {
             _productRepository = productRepository;
-            _cloudinaryService = cloudinaryService;
+            _cloudinaryService = cloudinaryService; 
+            _mapper = mapper;
         }
 
-        public async Task<List<Product>> GetAllProductsAsync()
+        public async Task<List<ProductDto>> GetAllProductsAsync()
         {
-            return await _productRepository.GetAllProductsAsync();
+            var products = await _productRepository.GetAllProductsAsync();
+            return _mapper.Map<List<ProductDto>>(products);
         }
 
-        public async Task<PagedResult<Product>> GetFilteredProductsAsync(ProductFilterDto filter)
+        public async Task<PagedResult<ProductDto>> GetFilteredProductsAsync(ProductFilterDto filter)
         {
-            // Có thể thêm logic xử lý bổ sung ở đây trước khi gọi Repository
-            return await _productRepository.GetFilteredProductsAsync(filter);
+            // Get data from repository
+            var pagedResult = await _productRepository.GetFilteredProductsAsync(filter);
+            
+            // Map to DTOs
+            var productDtos = _mapper.Map<List<ProductDto>>(pagedResult.Items);
+            
+            // Return a new PagedResult with mapped items
+            return new PagedResult<ProductDto>
+            {
+                Items = productDtos,
+                TotalCount = pagedResult.TotalCount,
+                PageCount = pagedResult.PageCount,
+                CurrentPage = pagedResult.CurrentPage,
+                PageSize = pagedResult.PageSize
+            };
         }
 
-        public async Task<Product?> GetProductByIdAsync(int productId)
+        public async Task<ProductDto?> GetProductByIdAsync(int productId)
         {
-            return await _productRepository.GetProductByIdAsync(productId);
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            return product == null ? null : _mapper.Map<ProductDto>(product);
         }
 
-        public async Task<List<Product>> GetProductsByCategoryAsync(int categoryId)
+        public async Task<List<ProductDto>> GetProductsByCategoryAsync(int categoryId)
         {
-            return await _productRepository.GetProductsByCategoryAsync(categoryId);
+            var products = await _productRepository.GetProductsByCategoryAsync(categoryId);
+            return _mapper.Map<List<ProductDto>>(products);
         }
 
-        public async Task<List<Product>> GetProductsByUserAsync(int userId)
+        public async Task<List<ProductDto>> GetProductsByUserAsync(int userId)
         {
-            return await _productRepository.GetProductsByUserAsync(userId);
+            var products = await _productRepository.GetProductsByUserAsync(userId);
+            return _mapper.Map<List<ProductDto>>(products);
         }
 
-        public async Task<PagedResult<Product>> GetProductsByUserPagedAsync(int userId, int page, int pageSize)
+        public async Task<PagedResult<ProductDto>> GetProductsByUserPagedAsync(int userId, int page, int pageSize)
         {
-            return await _productRepository.GetProductsByUserPagedAsync(userId, page, pageSize);
+            var pagedResult = await _productRepository.GetProductsByUserPagedAsync(userId, page, pageSize);
+            var productDtos = _mapper.Map<List<ProductDto>>(pagedResult.Items);
+
+            return new PagedResult<ProductDto>
+            {
+                Items = productDtos,
+                TotalCount = pagedResult.TotalCount,
+                PageCount = pagedResult.PageCount,
+                CurrentPage = pagedResult.CurrentPage,
+                PageSize = pagedResult.PageSize
+            };
         }
 
-        public async Task<bool> CreateProductAsync(Product product)
+        public async Task<bool> CreateProductAsync(ProductDto productDto)
         {
+            // Map DTO to entity
+            var product = _mapper.Map<Product>(productDto);
+            
             // Set date posted to current date/time
             product.DatePosted = DateTime.Now;
             
@@ -61,9 +97,24 @@ namespace Services.Implementations
             return await _productRepository.CreateProductAsync(product);
         }
 
-        public async Task<bool> UpdateProductAsync(Product product)
+        public async Task<bool> UpdateProductAsync(ProductDto productDto)
         {
-            return await _productRepository.UpdateProductAsync(product);
+            // Lấy sản phẩm hiện có từ cơ sở dữ liệu
+            var existingProduct = await _productRepository.GetProductByIdAsync(productDto.ProductId);
+            if (existingProduct == null)
+                return false;
+
+            // Cập nhật các thuộc tính của sản phẩm
+            existingProduct.Name = productDto.Name;
+            existingProduct.Description = productDto.Description;
+            existingProduct.Price = productDto.Price;
+            existingProduct.Status = productDto.Status;
+            existingProduct.CategoryId = productDto.CategoryId;
+
+            // Không cập nhật các thuộc tính quan hệ trực tiếp từ DTO
+            // Các thuộc tính như Images, Reviews... cần được xử lý riêng biệt
+
+            return await _productRepository.UpdateProductAsync(existingProduct);
         }
 
         public async Task<bool> DeleteProductAsync(int productId)
@@ -71,14 +122,16 @@ namespace Services.Implementations
             return await _productRepository.DeleteProductAsync(productId);
         }
 
-        public async Task<List<ProductCategory>> GetAllCategoriesAsync()
+        public async Task<List<CategoryDto>> GetAllCategoriesAsync()
         {
-            return await _productRepository.GetAllCategoriesAsync();
+            var categories = await _productRepository.GetAllCategoriesAsync();
+            return _mapper.Map<List<CategoryDto>>(categories);
         }
 
-        public async Task<ProductCategory?> GetCategoryByIdAsync(int categoryId)
+        public async Task<CategoryDto?> GetCategoryByIdAsync(int categoryId)
         {
-            return await _productRepository.GetCategoryByIdAsync(categoryId);
+            var category = await _productRepository.GetCategoryByIdAsync(categoryId);
+            return category == null ? null : _mapper.Map<CategoryDto>(category);
         }
 
         public async Task<string> UploadProductImageAsync(IFormFile imageFile)
@@ -103,6 +156,17 @@ namespace Services.Implementations
             // For local files, we would need to delete them from the disk
             // But since we're moving away from local storage, we'll return true
             return true;
+        }
+
+        public async Task<ProductImageDto?> GetImageDetailsAsync(int imageId)
+        {
+            // We need to look up the image by its ID
+            // This will depend on how your repository is structured
+            var image = await _productRepository.GetProductImageByIdAsync(imageId);
+            if (image == null)
+                return null;
+
+            return _mapper.Map<ProductImageDto>(image);
         }
     }
 }

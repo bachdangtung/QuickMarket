@@ -1,3 +1,4 @@
+using BussinessLogic.DTOs;
 using BussinessLogic.Models;
 
 namespace Repositories.Interfaces
@@ -15,5 +16,6 @@ namespace Repositories.Interfaces
         Task<bool> DeleteProductAsync(int productId);
         Task<List<ProductCategory>> GetAllCategoriesAsync();
         Task<ProductCategory?> GetCategoryByIdAsync(int categoryId);
+        Task<ProductImage?> GetProductImageByIdAsync(int imageId);
     }
 }
