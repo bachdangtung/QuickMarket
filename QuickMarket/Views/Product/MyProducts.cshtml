@@ -1,4 +1,4 @@
-@model List<QuickMarket.Models.ProductViewModel>
+@model BussinessLogic.DTOs.Products.ProductListDto
 
 @{
     ViewData["Title"] = "Sản phẩm của tôi";
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    @if (Model.Count == 0)
+    @if (Model.Products.Count == 0)
     {
         <div class="alert alert-info">
             <p>Bạn chưa có sản phẩm nào.</p>
@@ -38,13 +38,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var product in Model)
+                    @foreach (var product in Model.Products)
                     {
                         <tr>
                             <td style="width: 100px;">
-                                @if (product.ExistingImageUrls != null && product.ExistingImageUrls.Any())
+                                @if (product.ImageUrls != null && product.ImageUrls.Any())
                                 {
-                                    <img src="@product.ExistingImageUrls.First()" style="width: 80px; height: 80px; object-fit: cover;" alt="@product.Name">
+                                    <img src="@product.ImageUrls.First()" style="width: 80px; height: 80px; object-fit: cover;" alt="@product.Name">
                                 }
                                 else
                                 {

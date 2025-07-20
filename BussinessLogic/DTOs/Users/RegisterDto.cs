@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace QuickMarket.Models
+namespace BussinessLogic.DTOs.Users
 {
-    public class RegisterViewModel
+    public class RegisterDto
     {
         [Required(ErrorMessage = "Username is required")]
         [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters")]

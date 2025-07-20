@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace QuickMarket.Models
+namespace BussinessLogic.DTOs.Users
 {
-    public class ResetPasswordViewModel
+    public class ResetPasswordDto
     {
         [Required(ErrorMessage = "Email address is required")]
         [EmailAddress(ErrorMessage = "Invalid email address")]

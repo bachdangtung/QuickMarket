@@ -1,4 +1,5 @@
 using BussinessLogic.DTOs;
+using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;

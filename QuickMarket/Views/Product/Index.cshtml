@@ -1,4 +1,4 @@
-@model QuickMarket.Models.ProductListViewModel
+@model BussinessLogic.DTOs.Products.ProductListDto
 
 @{
     ViewData["Title"] = "Danh sách sản phẩm";
@@ -13,7 +13,7 @@
                 <div class="card-img-overlay d-flex flex-column justify-content-center text-center">
                     <h1 class="card-title display-4 fw-bold">Chào mừng đến với QuickMarket</h1>
                     <p class="card-text fs-5">Nơi mua bán, trao đổi sản phẩm an toàn và tiện lợi</p>
-                    @if (!User.Identity.IsAuthenticated)
+                    @if (!(User.Identity?.IsAuthenticated ?? false))
                     {
                         <div>
                             <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-2">Đăng ký</a>
@@ -88,9 +88,9 @@
                 <div class="col">
                     <div class="card h-100 shadow-sm">
                         <div class="position-relative product-image-container">
-                            @if (product.ExistingImageUrls != null && product.ExistingImageUrls.Any())
+                            @if (product.ImageUrls != null && product.ImageUrls.Any())
                             {
-                                <img src="@product.ExistingImageUrls.First()" class="card-img-top" alt="@product.Name">
+                                <img src="@product.ImageUrls.First()" class="card-img-top" alt="@product.Name">
                             }
                             else
                             {
@@ -118,7 +118,7 @@
                                 <a asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-primary">
                                     <i class="bi bi-info-circle"></i> Chi tiết
                                 </a>
-                                @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value == product.UserId.ToString()))
+                                @if (User.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == product.UserId.ToString()))
                                 {
                                     <div>
                                         <a asp-action="Edit" asp-route-id="@product.ProductId" class="btn btn-sm btn-warning">

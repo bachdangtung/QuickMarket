@@ -19,7 +19,7 @@ namespace QuickMarket.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login(string returnUrl = null)
+        public IActionResult Login(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             return View();
@@ -27,27 +27,27 @@ namespace QuickMarket.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
+        public async Task<IActionResult> Login(LoginDto loginDto, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             
             if (!ModelState.IsValid)
             {
-                return View(model);
+                return View(loginDto);
             }
 
-            var isValid = await _authService.ValidateUserAsync(model.Email, model.Password);
+            var isValid = await _authService.ValidateUserAsync(loginDto.Email, loginDto.Password);
             if (!isValid)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return View(model);
+                return View(loginDto);
             }
 
-            var user = await _authService.GetUserByEmailAsync(model.Email);
+            var user = await _authService.GetUserByEmailAsync(loginDto.Email);
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "User not found.");
-                return View(model);
+                return View(loginDto);
             }
 
             // Create claims for the user
@@ -62,7 +62,7 @@ namespace QuickMarket.Controllers
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
             {
-                IsPersistent = model.RememberMe,
+                IsPersistent = loginDto.RememberMe,
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
             };
 
@@ -72,7 +72,7 @@ namespace QuickMarket.Controllers
                 authProperties);
 
             // Update last login timestamp
-            await _authService.UpdateLastLoginAsync(model.Email);
+            await _authService.UpdateLastLoginAsync(loginDto.Email);
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
@@ -90,23 +90,23 @@ namespace QuickMarket.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterDto registerDto)
         {
             if (ModelState.IsValid)
             {
-                var result = await _authService.RegisterUserAsync(model.Username, model.Email, model.Password);
+                var result = await _authService.RegisterUserAsync(registerDto.Username, registerDto.Email, registerDto.Password);
                 if (result)
                 {
                     // Auto login after registration
-                    await Login(new LoginViewModel { Email = model.Email, Password = model.Password, RememberMe = false });
-                    return RedirectToAction("Index", "Home");
+                    var loginDto = new LoginDto { Email = registerDto.Email, Password = registerDto.Password, RememberMe = false };
+                    return await Login(loginDto, null);
                 }
                 else
                 {
                     ModelState.AddModelError(string.Empty, "Registration failed. Email or username may already be in use.");
                 }
             }
-            return View(model);
+            return View(registerDto);
         }
 
         [HttpPost]
@@ -125,15 +125,15 @@ namespace QuickMarket.Controllers
         
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
         {
             if (!ModelState.IsValid)
             {
-                return View(model);
+                return View(forgotPasswordDto);
             }
             
             // Check if user exists
-            var user = await _authService.GetUserByEmailAsync(model.Email);
+            var user = await _authService.GetUserByEmailAsync(forgotPasswordDto.Email);
             if (user == null)
             {
                 // Don't reveal that the user does not exist
@@ -142,7 +142,7 @@ namespace QuickMarket.Controllers
             }
             
             // Generate reset token
-            var token = await _authService.GeneratePasswordResetTokenAsync(model.Email);
+            var token = await _authService.GeneratePasswordResetTokenAsync(forgotPasswordDto.Email);
             if (string.IsNullOrEmpty(token))
             {
                 // Something went wrong, but don't reveal it
@@ -152,11 +152,14 @@ namespace QuickMarket.Controllers
             
             // Generate callback URL
             var callbackUrl = Url.Action("ResetPassword", "Account", 
-                new { email = model.Email, token = token }, 
+                new { email = forgotPasswordDto.Email, token = token }, 
                 protocol: HttpContext.Request.Scheme);
             
             // Send email
-            await _authService.SendPasswordResetEmailAsync(model.Email, callbackUrl);
+            if (callbackUrl != null)
+            {
+                await _authService.SendPasswordResetEmailAsync(forgotPasswordDto.Email, callbackUrl);
+            }
             
             ViewData["SuccessMessage"] = "If your email is registered, we've sent a password reset link.";
             return View();
@@ -170,38 +173,38 @@ namespace QuickMarket.Controllers
                 return RedirectToAction("Login");
             }
             
-            var model = new ResetPasswordViewModel
+            var resetPasswordDto = new ResetPasswordDto
             {
                 Email = email,
                 Token = token
             };
             
-            return View(model);
+            return View(resetPasswordDto);
         }
         
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
         {
             if (!ModelState.IsValid)
             {
-                return View(model);
+                return View(resetPasswordDto);
             }
             
             // Validate token
-            var isValidToken = await _authService.ValidatePasswordResetTokenAsync(model.Email, model.Token);
+            var isValidToken = await _authService.ValidatePasswordResetTokenAsync(resetPasswordDto.Email, resetPasswordDto.Token);
             if (!isValidToken)
             {
                 ModelState.AddModelError(string.Empty, "Invalid or expired password reset token.");
-                return View(model);
+                return View(resetPasswordDto);
             }
             
             // Reset password
-            var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.Password);
+            var result = await _authService.ResetPasswordAsync(resetPasswordDto.Email, resetPasswordDto.Token, resetPasswordDto.Password);
             if (!result)
             {
                 ModelState.AddModelError(string.Empty, "Error resetting password.");
-                return View(model);
+                return View(resetPasswordDto);
             }
             
             return RedirectToAction("ResetPasswordConfirmation");
@@ -221,7 +224,7 @@ namespace QuickMarket.Controllers
 
         // Google Login
         [HttpGet]
-        public IActionResult GoogleLogin(string returnUrl = null)
+        public IActionResult GoogleLogin(string? returnUrl = null)
         {
             var redirectUrl = Url.Action("GoogleResponse", "Account", new { ReturnUrl = returnUrl });
             var properties = new AuthenticationProperties 
@@ -233,7 +236,7 @@ namespace QuickMarket.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GoogleResponse(string returnUrl = null)
+        public async Task<IActionResult> GoogleResponse(string? returnUrl = null)
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (!result.Succeeded)

@@ -4,11 +4,9 @@ using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuickMarket.Models;
 using Services.Interfaces;
 using System.Security.Claims;
 using AutoMapper;
-using QuickMarket.Helpers;
 
 namespace QuickMarket.Controllers
 {
@@ -24,16 +22,16 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product
-        public async Task<IActionResult> Index(string searchQuery = null, int? categoryId = null, string sortOrder = null, int page = 1)
+        public async Task<IActionResult> Index(string? searchQuery = null, int? categoryId = null, string? sortOrder = null, int page = 1)
         {
             var pageSize = 12; // Số sản phẩm trên mỗi trang
             
             // Tạo DTO chứa các tham số lọc và phân trang
             var filter = new ProductFilterDto
             {
-                SearchQuery = searchQuery,
+                SearchQuery = searchQuery ?? string.Empty,
                 CategoryId = categoryId,
-                SortOrder = sortOrder,
+                SortOrder = sortOrder ?? string.Empty,
                 Page = page,
                 PageSize = pageSize
             };
@@ -41,23 +39,20 @@ namespace QuickMarket.Controllers
             // Gọi service để lọc, sắp xếp và phân trang ngay từ database
             var pagedResult = await _productService.GetFilteredProductsAsync(filter);
             
-            // Sử dụng extension method để map PagedResult<ProductDto> sang PagedResult<ProductViewModel>
-            var pagedViewModelResult = pagedResult.ToMappedPagedResult<ProductDto, ProductViewModel>(_mapper);
-
             var categories = await _productService.GetAllCategoriesAsync();
 
-            var viewModel = new ProductListViewModel
+            var productListDto = new ProductListDto
             {
-                Products = pagedViewModelResult.Items,
+                Products = pagedResult.Items,
                 Categories = categories,  
                 SearchQuery = searchQuery,
                 CategoryFilter = categoryId,
                 SortOrder = sortOrder,
-                CurrentPage = pagedViewModelResult.CurrentPage,
-                TotalPages = pagedViewModelResult.PageCount
+                CurrentPage = pagedResult.CurrentPage,
+                TotalPages = pagedResult.PageCount
             };
 
-            return View(viewModel);
+            return View(productListDto);
         }
 
         // GET: Product/Details/5
@@ -69,31 +64,32 @@ namespace QuickMarket.Controllers
                 return NotFound();
             }
 
-            // Sử dụng AutoMapper để chuyển đổi từ ProductReviewDto sang ProductReviewViewModel
-            var allReviewsVM = _mapper.Map<List<ProductReviewViewModel>>(productDto.Reviews);
-
             // Tách riêng reviews gốc (không có ThreadId) và replies (có ThreadId)
-            var mainReviews = allReviewsVM.Where(r => r.ThreadId == null).ToList();
-            var replies = allReviewsVM.Where(r => r.ThreadId != null).ToList();
+            var mainReviews = productDto.Reviews.Where(r => r.ThreadId == null).ToList();
+            var replies = productDto.Reviews.Where(r => r.ThreadId != null).ToList();
 
             // Gán replies vào review gốc tương ứng
             foreach (var reply in replies)
             {
-                var parentReview = allReviewsVM.FirstOrDefault(r => r.ReviewId == reply.ThreadId);
+                var parentReview = productDto.Reviews.FirstOrDefault(r => r.ReviewId == reply.ThreadId);
                 if (parentReview != null)
                 {
                     if (parentReview.Replies == null)
-                        parentReview.Replies = new List<ProductReviewViewModel>();
+                        parentReview.Replies = new ProductReviewDto[] { };
                     
-                    parentReview.Replies.Add(reply);
+                    var replyList = parentReview.Replies.ToList();
+                    replyList.Add(reply);
+                    parentReview.Replies = replyList.ToArray();
                 }
             }
 
-            // Sử dụng AutoMapper để chuyển đổi từ ProductDto sang ProductViewModel
-            var viewModel = _mapper.Map<ProductViewModel>(productDto);
-            viewModel.Reviews = mainReviews; // Chỉ lấy các reviews gốc (các replies đã được gắn vào reviews gốc)
+            // Chỉ giữ lại các reviews gốc (các replies đã được gắn vào reviews gốc)
+            productDto.Reviews = mainReviews;
 
-            return View(viewModel);
+            // Convert ProductDto to ProductCreateUpdateDto for the view
+            var createUpdateDto = _mapper.Map<ProductCreateUpdateDto>(productDto);
+            
+            return View(createUpdateDto);
         }
 
         // GET: Product/Create
@@ -101,33 +97,32 @@ namespace QuickMarket.Controllers
         public async Task<IActionResult> Create()
         {
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
-            return View();
+            return View(new ProductCreateUpdateDto { DatePosted = DateTime.Now, Status = "Active" });
         }
 
         // POST: Product/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
-        public async Task<IActionResult> Create(ProductViewModel viewModel)
+        public async Task<IActionResult> Create(ProductCreateUpdateDto productDto, List<IFormFile> imageFiles)
         {
             if (ModelState.IsValid)
             {
-                // Map từ ViewModel sang Entity
-                var product = _mapper.Map<Product>(viewModel);
-                product.DatePosted = DateTime.Now;
-                product.Status = "Active";
-                product.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                // Set up user ID and other defaults
+                productDto.DatePosted = DateTime.Now;
+                productDto.Status = "Active";
+                productDto.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
-                // Convert the Product to ProductDto for the service or ensure the service accepts Product type
-                var productDto = _mapper.Map<ProductDto>(product);
-                var result = await _productService.CreateProductAsync(productDto);
+                // Convert to ProductDto for service call
+                var serviceProductDto = _mapper.Map<ProductDto>(productDto);
+                var result = await _productService.CreateProductAsync(serviceProductDto);
                 
                 if (result)
                 {
                     // Xử lý tải lên hình ảnh
-                    if (viewModel.ImageFiles != null && viewModel.ImageFiles.Count > 0)
+                    if (imageFiles != null && imageFiles.Count > 0)
                     {
-                        await SaveProductImages(product.ProductId, viewModel.ImageFiles);
+                        await SaveProductImages(serviceProductDto.ProductId, imageFiles);
                     }
 
                     return RedirectToAction(nameof(Index));
@@ -135,7 +130,7 @@ namespace QuickMarket.Controllers
             }
 
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
-            return View(viewModel);
+            return View(productDto);
         }
 
         // GET: Product/Edit/5
@@ -149,61 +144,61 @@ namespace QuickMarket.Controllers
             }
 
             // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
-            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             if (productDto.UserId != currentUserId && !User.IsInRole("Admin"))
             {
                 return Forbid();
             }
 
-            var viewModel = _mapper.Map<ProductViewModel>(productDto);
+            var editDto = _mapper.Map<ProductCreateUpdateDto>(productDto);
 
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
-            return View(viewModel);
+            return View(editDto);
         }
 
         // POST: Product/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
-        public async Task<IActionResult> Edit(int id, ProductViewModel viewModel)
+        public async Task<IActionResult> Edit(int id, ProductCreateUpdateDto productDto, List<IFormFile> imageFiles)
         {
-            if (id != viewModel.ProductId)
+            if (id != productDto.ProductId)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
-                var productDto = await _productService.GetProductByIdAsync(id);
-                if (productDto == null)
+                var existingProductDto = await _productService.GetProductByIdAsync(id);
+                if (existingProductDto == null)
                 {
                     return NotFound();
                 }
 
                 // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
-                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                if (productDto.UserId != currentUserId && !User.IsInRole("Admin"))
+                var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+                if (existingProductDto.UserId != currentUserId && !User.IsInRole("Admin"))
                 {
                     return Forbid();
                 }
 
-                // Cập nhật thông tin sản phẩm từ ViewModel vào DTO
-                var updatedProductDto = _mapper.Map<ProductDto>(viewModel);
+                // Cập nhật thông tin sản phẩm từ ProductCreateUpdateDto vào DTO
+                var updatedProductDto = _mapper.Map<ProductDto>(productDto);
                 updatedProductDto.ProductId = id;
                 
                 // Giữ nguyên thông tin không thay đổi
-                updatedProductDto.UserId = productDto.UserId;
-                updatedProductDto.DatePosted = productDto.DatePosted;
-                updatedProductDto.ImageUrls = productDto.ImageUrls;
+                updatedProductDto.UserId = existingProductDto.UserId;
+                updatedProductDto.DatePosted = existingProductDto.DatePosted;
+                updatedProductDto.ImageUrls = existingProductDto.ImageUrls;
 
                 var result = await _productService.UpdateProductAsync(updatedProductDto);
-
+                
                 if (result)
                 {
-                    // Xử lý tải lên hình ảnh mới nếu có
-                    if (viewModel.ImageFiles != null && viewModel.ImageFiles.Count > 0)
+                    // Xử lý tải lên hình ảnh
+                    if (imageFiles != null && imageFiles.Count > 0)
                     {
-                        await SaveProductImages(updatedProductDto.ProductId, viewModel.ImageFiles);
+                        await SaveProductImages(updatedProductDto.ProductId, imageFiles);
                     }
 
                     return RedirectToAction(nameof(Index));
@@ -211,7 +206,7 @@ namespace QuickMarket.Controllers
             }
 
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
-            return View(viewModel);
+            return View(productDto);
         }
 
         // GET: Product/Delete/5
@@ -225,15 +220,16 @@ namespace QuickMarket.Controllers
             }
 
             // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
-            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             if (productDto.UserId != currentUserId && !User.IsInRole("Admin"))
             {
                 return Forbid();
             }
 
-            var viewModel = _mapper.Map<ProductViewModel>(productDto);
+            // Convert ProductDto to ProductCreateUpdateDto for the view
+            var createUpdateDto = _mapper.Map<ProductCreateUpdateDto>(productDto);
 
-            return View(viewModel);
+            return View(createUpdateDto);
         }
 
         // POST: Product/Delete/5
@@ -249,7 +245,7 @@ namespace QuickMarket.Controllers
             }
 
             // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
-            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             if (product.UserId != currentUserId && !User.IsInRole("Admin"))
             {
                 return Forbid();
@@ -261,7 +257,7 @@ namespace QuickMarket.Controllers
 
         // GET: Product/ManageProducts
         [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> ManageProducts(string searchQuery = null, int? categoryId = null, string sortOrder = null, int page = 1)
+        public async Task<IActionResult> ManageProducts(string? searchQuery = null, int? categoryId = null, string? sortOrder = null, int page = 1)
         {
             var pageSize = 20; // Hiển thị nhiều sản phẩm hơn trong chế độ quản lý
             
@@ -278,47 +274,41 @@ namespace QuickMarket.Controllers
             // Gọi service để lọc, sắp xếp và phân trang ngay từ database
             var pagedResult = await _productService.GetFilteredProductsAsync(filter);
             
-            // Sử dụng extension method để map PagedResult<ProductDto> sang PagedResult<ProductViewModel>
-            var pagedViewModelResult = pagedResult.ToMappedPagedResult<ProductDto, ProductViewModel>(_mapper);
-
             var categories = await _productService.GetAllCategoriesAsync();
 
-            var viewModel = new ProductListViewModel
+            var productListDto = new ProductListDto
             {
-                Products = pagedViewModelResult.Items,
+                Products = pagedResult.Items,
                 Categories = categories,
                 SearchQuery = searchQuery,
                 CategoryFilter = categoryId,
                 SortOrder = sortOrder,
-                CurrentPage = pagedViewModelResult.CurrentPage,
-                TotalPages = pagedViewModelResult.PageCount
+                CurrentPage = pagedResult.CurrentPage,
+                TotalPages = pagedResult.PageCount
             };
 
-            return View(viewModel);
+            return View(productListDto);
         }
 
         // GET: Product/MyProducts
         [Authorize]
         public async Task<IActionResult> MyProducts(int page = 1)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             var pageSize = 10; // Số sản phẩm trên mỗi trang
             
             // Sử dụng phiên bản có phân trang
             var pagedResult = await _productService.GetProductsByUserPagedAsync(userId, page, pageSize);
             
-            // Sử dụng extension method để map PagedResult<ProductDto> sang PagedResult<ProductViewModel>
-            var pagedViewModelResult = pagedResult.ToMappedPagedResult<ProductDto, ProductViewModel>(_mapper);
-            
-            // Tạo một viewModel để bao gồm thông tin phân trang
-            var viewModel = new ProductListViewModel
+            // Tạo một productListDto để bao gồm thông tin phân trang
+            var productListDto = new ProductListDto
             {
-                Products = pagedViewModelResult.Items,
-                CurrentPage = pagedViewModelResult.CurrentPage,
-                TotalPages = pagedViewModelResult.PageCount
+                Products = pagedResult.Items,
+                CurrentPage = pagedResult.CurrentPage,
+                TotalPages = pagedResult.PageCount
             };
             
-            return View(viewModel);
+            return View(productListDto);
         }
 
         // POST: Product/AddReview
@@ -339,7 +329,7 @@ namespace QuickMarket.Controllers
                 return NotFound();
             }
 
-            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             
             // Nếu là bình luận gốc (không phải trả lời)
             if (!threadId.HasValue)
@@ -445,7 +435,7 @@ namespace QuickMarket.Controllers
             }
             
             // Verify the user owns the product
-            if (product.UserId != int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)))
+            if (product.UserId != int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0"))
             {
                 return Json(new { success = false, message = "You are not authorized to delete this image" });
             }
