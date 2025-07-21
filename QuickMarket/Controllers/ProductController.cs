@@ -2,6 +2,7 @@ using BussinessLogic.DTOs;
 using BussinessLogic.DTOs.Categories;
 using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
+using BussinessLogic.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
@@ -22,6 +23,8 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product
+        // Tất cả người dùng đều có thể xem danh sách sản phẩm
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string? searchQuery = null, int? categoryId = null, string? sortOrder = null, int page = 1)
         {
             var pageSize = 12; // Số sản phẩm trên mỗi trang
@@ -37,54 +40,35 @@ namespace QuickMarket.Controllers
             };
             
             // Gọi service để lọc, sắp xếp và phân trang ngay từ database
-            var pagedResult = await _productService.GetFilteredProductsAsync(filter);
+            var (items, totalCount, pageCount, currentPage, _) = await _productService.GetFilteredProductsAsync(filter);
             
             var categories = await _productService.GetAllCategoriesAsync();
 
             var productListDto = new ProductListDto
             {
-                Products = pagedResult.Items,
+                Products = items,
                 Categories = categories,  
                 SearchQuery = searchQuery,
                 CategoryFilter = categoryId,
                 SortOrder = sortOrder,
-                CurrentPage = pagedResult.CurrentPage,
-                TotalPages = pagedResult.PageCount
+                CurrentPage = currentPage,
+                TotalPages = pageCount
             };
 
             return View(productListDto);
         }
 
         // GET: Product/Details/5
+        // Tất cả người dùng đều có thể xem chi tiết sản phẩm
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int id)
         {
-            var productDto = await _productService.GetProductByIdAsync(id);
+            // Sử dụng phương thức mới từ service để lấy sản phẩm với reviews đã được tổ chức
+            var productDto = await _productService.GetProductByIdWithNestedReviewsAsync(id);
             if (productDto == null)
             {
                 return NotFound();
             }
-
-            // Tách riêng reviews gốc (không có ThreadId) và replies (có ThreadId)
-            var mainReviews = productDto.Reviews.Where(r => r.ThreadId == null).ToList();
-            var replies = productDto.Reviews.Where(r => r.ThreadId != null).ToList();
-
-            // Gán replies vào review gốc tương ứng
-            foreach (var reply in replies)
-            {
-                var parentReview = productDto.Reviews.FirstOrDefault(r => r.ReviewId == reply.ThreadId);
-                if (parentReview != null)
-                {
-                    if (parentReview.Replies == null)
-                        parentReview.Replies = new ProductReviewDto[] { };
-                    
-                    var replyList = parentReview.Replies.ToList();
-                    replyList.Add(reply);
-                    parentReview.Replies = replyList.ToArray();
-                }
-            }
-
-            // Chỉ giữ lại các reviews gốc (các replies đã được gắn vào reviews gốc)
-            productDto.Reviews = mainReviews;
 
             // Convert ProductDto to ProductCreateUpdateDto for the view
             var createUpdateDto = _mapper.Map<ProductCreateUpdateDto>(productDto);
@@ -93,7 +77,8 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product/Create
-        [Authorize]
+        // Chỉ người bán, người quản lý và admin mới có thể tạo sản phẩm
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> Create()
         {
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
@@ -103,29 +88,37 @@ namespace QuickMarket.Controllers
         // POST: Product/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> Create(ProductCreateUpdateDto productDto, List<IFormFile> imageFiles)
         {
             if (ModelState.IsValid)
             {
                 // Set up user ID and other defaults
                 productDto.DatePosted = DateTime.Now;
-                productDto.Status = "Active";
+                productDto.Status = ProductStatus.Active.ToString();
                 productDto.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
                 // Convert to ProductDto for service call
                 var serviceProductDto = _mapper.Map<ProductDto>(productDto);
-                var result = await _productService.CreateProductAsync(serviceProductDto);
+                var (success, productId, errorMessage) = await _productService.CreateProductAsync(serviceProductDto);
                 
-                if (result)
+                if (success)
                 {
-                    // Xử lý tải lên hình ảnh
+                    // Xử lý tải lên hình ảnh nếu sản phẩm được tạo thành công
                     if (imageFiles != null && imageFiles.Count > 0)
                     {
-                        await SaveProductImages(serviceProductDto.ProductId, imageFiles);
+                        await SaveProductImages(productId, imageFiles);
                     }
 
                     return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    // Thêm lỗi từ service vào ModelState
+                    if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        ModelState.AddModelError("", errorMessage);
+                    }
                 }
             }
 
@@ -134,7 +127,7 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product/Edit/5
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> Edit(int id)
         {
             var productDto = await _productService.GetProductByIdAsync(id);
@@ -143,9 +136,9 @@ namespace QuickMarket.Controllers
                 return NotFound();
             }
 
-            // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
+            // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu, manager hoặc admin không
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-            if (productDto.UserId != currentUserId && !User.IsInRole("Admin"))
+            if (productDto.UserId != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("Manager"))
             {
                 return Forbid();
             }
@@ -159,7 +152,7 @@ namespace QuickMarket.Controllers
         // POST: Product/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> Edit(int id, ProductCreateUpdateDto productDto, List<IFormFile> imageFiles)
         {
             if (id != productDto.ProductId)
@@ -175,9 +168,9 @@ namespace QuickMarket.Controllers
                     return NotFound();
                 }
 
-                // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
+                // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu, manager hoặc admin không
                 var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-                if (existingProductDto.UserId != currentUserId && !User.IsInRole("Admin"))
+                if (existingProductDto.UserId != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("Manager"))
                 {
                     return Forbid();
                 }
@@ -191,9 +184,9 @@ namespace QuickMarket.Controllers
                 updatedProductDto.DatePosted = existingProductDto.DatePosted;
                 updatedProductDto.ImageUrls = existingProductDto.ImageUrls;
 
-                var result = await _productService.UpdateProductAsync(updatedProductDto);
+                var (success, errorMessage) = await _productService.UpdateProductAsync(updatedProductDto);
                 
-                if (result)
+                if (success)
                 {
                     // Xử lý tải lên hình ảnh
                     if (imageFiles != null && imageFiles.Count > 0)
@@ -203,6 +196,14 @@ namespace QuickMarket.Controllers
 
                     return RedirectToAction(nameof(Index));
                 }
+                else
+                {
+                    // Thêm lỗi từ service vào ModelState
+                    if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        ModelState.AddModelError("", errorMessage);
+                    }
+                }
             }
 
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
@@ -210,7 +211,7 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product/Delete/5
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> Delete(int id)
         {
             var productDto = await _productService.GetProductByIdAsync(id);
@@ -219,9 +220,9 @@ namespace QuickMarket.Controllers
                 return NotFound();
             }
 
-            // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
+            // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu, manager hoặc admin không
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-            if (productDto.UserId != currentUserId && !User.IsInRole("Admin"))
+            if (productDto.UserId != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("Manager"))
             {
                 return Forbid();
             }
@@ -235,7 +236,7 @@ namespace QuickMarket.Controllers
         // POST: Product/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _productService.GetProductByIdAsync(id);
@@ -244,14 +245,24 @@ namespace QuickMarket.Controllers
                 return NotFound();
             }
 
-            // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu hoặc admin không
+            // Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu, manager hoặc admin không
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-            if (product.UserId != currentUserId && !User.IsInRole("Admin"))
+            if (product.UserId != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("Manager"))
             {
                 return Forbid();
             }
 
-            await _productService.DeleteProductAsync(id);
+            var (success, errorMessage) = await _productService.DeleteProductAsync(id);
+            
+            if (!success)
+            {
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    ModelState.AddModelError("", errorMessage);
+                }
+                return View(product);
+            }
+            
             return RedirectToAction(nameof(Index));
         }
 
@@ -272,109 +283,67 @@ namespace QuickMarket.Controllers
             };
             
             // Gọi service để lọc, sắp xếp và phân trang ngay từ database
-            var pagedResult = await _productService.GetFilteredProductsAsync(filter);
+            var (items, totalCount, pageCount, currentPage, _) = await _productService.GetFilteredProductsAsync(filter);
             
             var categories = await _productService.GetAllCategoriesAsync();
 
             var productListDto = new ProductListDto
             {
-                Products = pagedResult.Items,
+                Products = items,
                 Categories = categories,
                 SearchQuery = searchQuery,
                 CategoryFilter = categoryId,
                 SortOrder = sortOrder,
-                CurrentPage = pagedResult.CurrentPage,
-                TotalPages = pagedResult.PageCount
+                CurrentPage = currentPage,
+                TotalPages = pageCount
             };
 
             return View(productListDto);
         }
 
         // GET: Product/MyProducts
-        [Authorize]
+        // Người bán xem sản phẩm của họ, Admin/Manager xem tất cả
+        [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> MyProducts(int page = 1)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             var pageSize = 10; // Số sản phẩm trên mỗi trang
             
             // Sử dụng phiên bản có phân trang
-            var pagedResult = await _productService.GetProductsByUserPagedAsync(userId, page, pageSize);
+            var (items, totalCount, pageCount, currentPage, _) = await _productService.GetProductsByUserPagedAsync(userId, page, pageSize);
             
             // Tạo một productListDto để bao gồm thông tin phân trang
             var productListDto = new ProductListDto
             {
-                Products = pagedResult.Items,
-                CurrentPage = pagedResult.CurrentPage,
-                TotalPages = pagedResult.PageCount
+                Products = items,
+                CurrentPage = currentPage,
+                TotalPages = pageCount
             };
             
             return View(productListDto);
         }
 
         // POST: Product/AddReview
+        // Chỉ khách hàng đã mua hàng và admin/manager mới có thể đánh giá sản phẩm
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Buyer")]
         public async Task<IActionResult> AddReview(int productId, byte rating, string comment, int? threadId = null)
         {
-            if (rating < 1 || rating > 5)
-            {
-                ModelState.AddModelError("", "Đánh giá phải từ 1 đến 5 sao");
-                return RedirectToAction(nameof(Details), new { id = productId });
-            }
-
-            var product = await _productService.GetProductByIdAsync(productId);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             
-            // Nếu là bình luận gốc (không phải trả lời)
-            if (!threadId.HasValue)
+            // Sử dụng service để thêm đánh giá
+            var (success, errorMessage) = await _productService.AddProductReviewAsync(productId, currentUserId, rating, comment, threadId);
+            
+            if (!success)
             {
-                // Kiểm tra xem người dùng đã đánh giá sản phẩm này chưa (chỉ với bình luận gốc, không phải reply)
-                if (product.Reviews.Any(r => r.UserId == currentUserId && r.ThreadId == null))
+                // Thêm lỗi vào ModelState
+                if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    ModelState.AddModelError("", "Bạn đã đánh giá sản phẩm này rồi");
-                    return RedirectToAction(nameof(Details), new { id = productId });
-                }
-
-                // Kiểm tra xem người dùng có đánh giá sản phẩm của chính mình không
-                if (product.UserId == currentUserId)
-                {
-                    ModelState.AddModelError("", "Bạn không thể đánh giá sản phẩm của chính mình");
-                    return RedirectToAction(nameof(Details), new { id = productId });
+                    ModelState.AddModelError("", errorMessage);
                 }
             }
-
-            var review = new ProductReview
-            {
-                ProductId = productId,
-                UserId = currentUserId,
-                Rating = rating,
-                Comment = comment,
-                ReviewDate = DateTime.Now,
-                ThreadId = threadId
-            };
-
-            // Create a new ProductReviewDto to add to the product's Reviews collection
-            var reviewDto = new ProductReviewDto
-            {
-                ReviewId = review.ReviewId,
-                ProductId = productId,
-                UserId = currentUserId,
-                Rating = rating,
-                Comment = comment,
-                ReviewDate = DateTime.Now,
-                ThreadId = threadId
-            };
-
-            // Thêm đánh giá vào sản phẩm
-            product.Reviews.Add(reviewDto);
-            await _productService.UpdateProductAsync(product);
-
+            
             return RedirectToAction(nameof(Details), new { id = productId });
         }
 
@@ -409,7 +378,7 @@ namespace QuickMarket.Controllers
 
         // POST: /Product/DeleteImage
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin,Manager,Seller")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteImage(int imageId)
         {
@@ -451,10 +420,10 @@ namespace QuickMarket.Controllers
             product.ImageUrls.Remove(imageUrl);
             
             // Update product
-            var updateResult = await _productService.UpdateProductAsync(product);
-            if (!updateResult)
+            var (success, errorMessage) = await _productService.UpdateProductAsync(product);
+            if (!success)
             {
-                return Json(new { success = false, message = "Failed to update product" });
+                return Json(new { success = false, message = errorMessage ?? "Failed to update product" });
             }
             
             return Json(new { success = true });
@@ -473,17 +442,18 @@ namespace QuickMarket.Controllers
                 return Json(new { success = false, message = "Không tìm thấy sản phẩm" });
             }
 
-            if (string.IsNullOrEmpty(status) || !new[] { "Active", "Inactive", "Sold" }.Contains(status))
+            // Kiểm tra status có hợp lệ không bằng cách sử dụng enum
+            if (string.IsNullOrEmpty(status) || !Enum.TryParse<ProductStatus>(status, out _))
             {
                 return Json(new { success = false, message = "Trạng thái không hợp lệ" });
             }
 
             product.Status = status;
-            var result = await _productService.UpdateProductAsync(product);
+            var (success, errorMessage) = await _productService.UpdateProductAsync(product);
 
-            if (!result)
+            if (!success)
             {
-                return Json(new { success = false, message = "Không thể cập nhật trạng thái sản phẩm" });
+                return Json(new { success = false, message = errorMessage ?? "Không thể cập nhật trạng thái sản phẩm" });
             }
 
             return Json(new { success = true });

@@ -1,8 +1,8 @@
 using AutoMapper;
-using BussinessLogic.DTOs;
 using BussinessLogic.DTOs.Categories;
 using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
+using BussinessLogic.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Repositories.Interfaces;
 using Services.Interfaces;
@@ -28,7 +28,7 @@ namespace Services.Implementations
             return _mapper.Map<List<ProductDto>>(products);
         }
 
-        public async Task<PagedResult<ProductDto>> GetFilteredProductsAsync(ProductFilterDto filter)
+        public async Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetFilteredProductsAsync(ProductFilterDto filter)
         {
             // Get data from repository
             var pagedResult = await _productRepository.GetFilteredProductsAsync(filter);
@@ -36,15 +36,14 @@ namespace Services.Implementations
             // Map to DTOs
             var productDtos = _mapper.Map<List<ProductDto>>(pagedResult.Items);
             
-            // Return a new PagedResult with mapped items
-            return new PagedResult<ProductDto>
-            {
-                Items = productDtos,
-                TotalCount = pagedResult.TotalCount,
-                PageCount = pagedResult.PageCount,
-                CurrentPage = pagedResult.CurrentPage,
-                PageSize = pagedResult.PageSize
-            };
+            // Return tuple with all paging info
+            return (
+                Items: productDtos,
+                TotalCount: pagedResult.TotalCount,
+                PageCount: pagedResult.PageCount,
+                CurrentPage: pagedResult.CurrentPage,
+                PageSize: pagedResult.PageSize
+            );
         }
 
         public async Task<ProductDto?> GetProductByIdAsync(int productId)
@@ -65,61 +64,140 @@ namespace Services.Implementations
             return _mapper.Map<List<ProductDto>>(products);
         }
 
-        public async Task<PagedResult<ProductDto>> GetProductsByUserPagedAsync(int userId, int page, int pageSize)
+        public async Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetProductsByUserPagedAsync(int userId, int page, int pageSize)
         {
             var pagedResult = await _productRepository.GetProductsByUserPagedAsync(userId, page, pageSize);
             var productDtos = _mapper.Map<List<ProductDto>>(pagedResult.Items);
 
-            return new PagedResult<ProductDto>
-            {
-                Items = productDtos,
-                TotalCount = pagedResult.TotalCount,
-                PageCount = pagedResult.PageCount,
-                CurrentPage = pagedResult.CurrentPage,
-                PageSize = pagedResult.PageSize
-            };
+            return (
+                Items: productDtos,
+                TotalCount: pagedResult.TotalCount,
+                PageCount: pagedResult.PageCount,
+                CurrentPage: pagedResult.CurrentPage,
+                PageSize: pagedResult.PageSize
+            );
         }
 
-        public async Task<bool> CreateProductAsync(ProductDto productDto)
+        public async Task<ProductDto?> GetProductByIdWithNestedReviewsAsync(int productId)
         {
-            // Map DTO to entity
-            var product = _mapper.Map<Product>(productDto);
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null) return null;
             
-            // Set date posted to current date/time
-            product.DatePosted = DateTime.Now;
+            var productDto = _mapper.Map<ProductDto>(product);
             
-            // Set default status if not provided
-            if (string.IsNullOrEmpty(product.Status))
+            // Tách riêng reviews gốc (không có ThreadId) và replies (có ThreadId)
+            var mainReviews = productDto.Reviews.Where(r => r.ThreadId == null).ToList();
+            var replies = productDto.Reviews.Where(r => r.ThreadId != null).ToList();
+
+            // Gán replies vào review gốc tương ứng
+            foreach (var reply in replies)
             {
-                product.Status = "Active";
+                var parentReview = productDto.Reviews.FirstOrDefault(r => r.ReviewId == reply.ThreadId);
+                if (parentReview != null)
+                {
+                    if (parentReview.Replies == null)
+                        parentReview.Replies = new ProductReviewDto[] { };
+                    
+                    var replyList = parentReview.Replies.ToList();
+                    replyList.Add(reply);
+                    parentReview.Replies = replyList.ToArray();
+                }
             }
 
-            return await _productRepository.CreateProductAsync(product);
+            // Chỉ giữ lại các reviews gốc (các replies đã được gắn vào reviews gốc)
+            productDto.Reviews = mainReviews;
+            
+            return productDto;
         }
 
-        public async Task<bool> UpdateProductAsync(ProductDto productDto)
+        public async Task<(bool Success, int ProductId, string? ErrorMessage)> CreateProductAsync(ProductDto productDto)
         {
-            // Lấy sản phẩm hiện có từ cơ sở dữ liệu
-            var existingProduct = await _productRepository.GetProductByIdAsync(productDto.ProductId);
-            if (existingProduct == null)
-                return false;
+            try
+            {
+                // Map DTO to entity
+                var product = _mapper.Map<Product>(productDto);
+                
+                // Set date posted to current date/time
+                product.DatePosted = DateTime.Now;
+                
+                // Set default status if not provided
+                if (string.IsNullOrEmpty(product.Status))
+                {
+                    product.Status = ProductStatus.Active.ToString();
+                }
 
-            // Cập nhật các thuộc tính của sản phẩm
-            existingProduct.Name = productDto.Name;
-            existingProduct.Description = productDto.Description;
-            existingProduct.Price = productDto.Price;
-            existingProduct.Status = productDto.Status;
-            existingProduct.CategoryId = productDto.CategoryId;
-
-            // Không cập nhật các thuộc tính quan hệ trực tiếp từ DTO
-            // Các thuộc tính như Images, Reviews... cần được xử lý riêng biệt
-
-            return await _productRepository.UpdateProductAsync(existingProduct);
+                var success = await _productRepository.CreateProductAsync(product);
+                
+                if (success)
+                {
+                    return (Success: true, ProductId: product.ProductId, ErrorMessage: null);
+                }
+                else
+                {
+                    return (Success: false, ProductId: 0, ErrorMessage: "Failed to create product");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (Success: false, ProductId: 0, ErrorMessage: $"Error creating product: {ex.Message}");
+            }
         }
 
-        public async Task<bool> DeleteProductAsync(int productId)
+        public async Task<(bool Success, string? ErrorMessage)> UpdateProductAsync(ProductDto productDto)
         {
-            return await _productRepository.DeleteProductAsync(productId);
+            try
+            {
+                // Lấy sản phẩm hiện có từ cơ sở dữ liệu
+                var existingProduct = await _productRepository.GetProductByIdAsync(productDto.ProductId);
+                if (existingProduct == null)
+                    return (Success: false, ErrorMessage: "Product not found");
+
+                // Cập nhật các thuộc tính của sản phẩm
+                existingProduct.Name = productDto.Name;
+                existingProduct.Description = productDto.Description;
+                existingProduct.Price = productDto.Price;
+                existingProduct.Status = productDto.Status;
+                existingProduct.CategoryId = productDto.CategoryId;
+
+                // Không cập nhật các thuộc tính quan hệ trực tiếp từ DTO
+                // Các thuộc tính như Images, Reviews... cần được xử lý riêng biệt
+
+                var success = await _productRepository.UpdateProductAsync(existingProduct);
+                
+                if (success)
+                {
+                    return (Success: true, ErrorMessage: null);
+                }
+                else
+                {
+                    return (Success: false, ErrorMessage: "Failed to update product");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (Success: false, ErrorMessage: $"Error updating product: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool Success, string? ErrorMessage)> DeleteProductAsync(int productId)
+        {
+            try
+            {
+                var success = await _productRepository.DeleteProductAsync(productId);
+                
+                if (success)
+                {
+                    return (Success: true, ErrorMessage: null);
+                }
+                else
+                {
+                    return (Success: false, ErrorMessage: "Failed to delete product");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (Success: false, ErrorMessage: $"Error deleting product: {ex.Message}");
+            }
         }
 
         public async Task<List<CategoryDto>> GetAllCategoriesAsync()
@@ -167,6 +245,71 @@ namespace Services.Implementations
                 return null;
 
             return _mapper.Map<ProductImageDto>(image);
+        }
+        
+        public async Task<(bool Success, string? ErrorMessage)> AddProductReviewAsync(int productId, int userId, byte rating, string comment, int? threadId = null)
+        {
+            try
+            {
+                // Validate the rating
+                if (rating < 1 || rating > 5)
+                {
+                    return (Success: false, ErrorMessage: "Rating must be between 1 and 5 stars");
+                }
+
+                // Get the product
+                var product = await _productRepository.GetProductByIdAsync(productId);
+                if (product == null)
+                {
+                    return (Success: false, ErrorMessage: "Product not found");
+                }
+
+                // If this is a root review (not a reply)
+                if (!threadId.HasValue)
+                {
+                    // Check if user already reviewed this product
+                    if (product.ProductReviews.Any(r => r.UserId == userId && r.ThreadId == null))
+                    {
+                        return (Success: false, ErrorMessage: "You have already reviewed this product");
+                    }
+
+                    // Check if user is reviewing their own product
+                    if (product.UserId == userId)
+                    {
+                        return (Success: false, ErrorMessage: "You cannot review your own product");
+                    }
+                }
+
+                // Create the review
+                var review = new ProductReview
+                {
+                    ProductId = productId,
+                    UserId = userId,
+                    Rating = rating,
+                    Comment = comment,
+                    ReviewDate = DateTime.Now,
+                    ThreadId = threadId
+                };
+
+                // Add to product reviews
+                product.ProductReviews.Add(review);
+                
+                // Save changes
+                var result = await _productRepository.UpdateProductAsync(product);
+
+                if (result)
+                {
+                    return (Success: true, ErrorMessage: null);
+                }
+                else
+                {
+                    return (Success: false, ErrorMessage: "Failed to add review");
+                }
+            }
+            catch (Exception ex)
+            {
+                return (Success: false, ErrorMessage: $"Error adding review: {ex.Message}");
+            }
         }
     }
 }

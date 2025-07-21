@@ -74,17 +74,7 @@
             </div>
 
             <div class="d-flex gap-2">
-                @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value == Model.UserId.ToString()))
-                {
-                    <a asp-action="Edit" asp-route-id="@Model.ProductId" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Chỉnh sửa
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@Model.ProductId" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Xóa
-                    </a>
-                }
-
-                <a asp-action="Index" class="btn btn-secondary ms-auto">
+                <a asp-action="Index" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Quay lại
                 </a>
             </div>
