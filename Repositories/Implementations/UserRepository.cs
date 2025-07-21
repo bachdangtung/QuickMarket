@@ -1,6 +1,8 @@
 using BussinessLogic.Models;
+using BussinessLogic.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
+using System.Linq;
 
 namespace Repositories.Implementations
 {
@@ -117,6 +119,53 @@ namespace Repositories.Implementations
             _context.Users.Update(user);
             var result = await _context.SaveChangesAsync();
             return result > 0;
+        }
+        
+        public async Task<User?> GetUserByIdAsync(int id)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == id);
+        }
+        
+        public async Task<PagedResult<User>> GetAllUsersAsync(int page = 1, int pageSize = 10, string searchTerm = "")
+        {
+            var query = _context.Users
+                .Include(u => u.Role)
+                .AsQueryable();
+                
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(u => 
+                    u.Username.Contains(searchTerm) || 
+                    u.Email.Contains(searchTerm));
+            }
+            
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            
+            var users = await query
+                .OrderBy(u => u.Username)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+                
+            return new PagedResult<User>
+            {
+                Items = users,
+                TotalCount = totalItems,
+                PageCount = totalPages,
+                CurrentPage = page,
+                PageSize = pageSize
+            };
+        }
+        
+        public async Task<IEnumerable<User>> GetUsersByRoleNameAsync(string roleName)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .Where(u => u.Role.RoleName == roleName)
+                .ToListAsync();
         }
     }
 }

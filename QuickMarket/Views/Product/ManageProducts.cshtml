@@ -112,11 +112,22 @@
                                 <div class="small text-muted">@product.DatePosted.ToString("HH:mm")</div>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm status-select" data-product-id="@product.ProductId">
-                                    @* <option value="Active" @(product.Status == "Active" ? "selected" : "")>Đang bán</option>
-                                    <option value="Inactive" @(product.Status == "Inactive" ? "selected" : "")>Tạm ngưng</option>
-                                    <option value="Sold" @(product.Status == "Sold" ? "selected" : "")>Đã bán</option> *@
-                                </select>
+                                @if (product.Status == "Active")
+                                {
+                                    <span class="badge bg-success">Đang bán</span>
+                                }
+                                else if (product.Status == "InActive")
+                                {
+                                    <span class="badge bg-warning">Tạm ngưng</span>
+                                }
+                                else if (product.Status == "Sold")
+                                {
+                                    <span class="badge bg-secondary">Đã bán</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark">@product.Status</span>
+                                }
                             </td>
                             <td>
                                 <div class="btn-group">
@@ -188,36 +199,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Xử lý thay đổi trạng thái sản phẩm
-            $('.status-select').change(function() {
-                var productId = $(this).data('product-id');
-                var newStatus = $(this).val();
-                
-                $.ajax({
-                    url: '@Url.Action("UpdateStatus")',
-                    type: 'POST',
-                    data: {
-                        productId: productId,
-                        status: newStatus,
-                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function(result) {
-                        if (result.success) {
-                            toastr.success('Cập nhật trạng thái thành công!');
-                        } else {
-                            toastr.error(result.message || 'Có lỗi xảy ra khi cập nhật trạng thái.');
-                            // Reset về trạng thái cũ
-                            location.reload();
-                        }
-                    },
-                    error: function() {
-                        toastr.error('Có lỗi xảy ra khi kết nối đến máy chủ.');
-                        location.reload();
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- Scripts supplémentaires peuvent être ajoutés ici si nécessaire -->
 }

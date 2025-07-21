@@ -1,0 +1,79 @@
+@model BussinessLogic.DTOs.Users.UserListDto
+
+@{
+    ViewData["Title"] = "Chỉnh sửa người dùng";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h2>@ViewData["Title"] - @Model.Username</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="UserId" />
+                <input type="hidden" asp-for="Username" />
+                <input type="hidden" asp-for="Email" />
+                <input type="hidden" asp-for="DateCreated" />
+                <input type="hidden" asp-for="LastLogin" />
+                <input type="hidden" asp-for="ProductCount" />
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Tên người dùng:</label>
+                        <input class="form-control" value="@Model.Username" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email:</label>
+                        <input class="form-control" value="@Model.Email" readonly />
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Ngày đăng ký:</label>
+                        <input class="form-control" value="@Model.DateCreated.ToString("dd/MM/yyyy HH:mm:ss")" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Đăng nhập cuối:</label>
+                        <input class="form-control" value="@(Model.LastLogin.HasValue ? Model.LastLogin.Value.ToString("dd/MM/yyyy HH:mm:ss") : "Chưa đăng nhập")" readonly />
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="RoleName" class="form-label">Vai trò:</label>
+                        <select asp-for="RoleName" class="form-select">
+                            <option value="Admin">Admin</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Seller">Seller</option>
+                            <option value="User">User</option>
+                        </select>
+                        <span asp-validation-for="RoleName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Status" class="form-label">Trạng thái:</label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="Active">Hoạt động</option>
+                            <option value="Inactive">Vô hiệu hóa</option>
+                            <option value="Suspended">Tạm khóa</option>
+                            <option value="Deleted">Đã xóa</option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-secondary">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

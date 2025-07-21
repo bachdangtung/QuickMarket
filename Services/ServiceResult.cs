@@ -1,5 +1,24 @@
 namespace Services
 {
+    public class ServiceResult
+    {
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public List<string> Errors { get; set; } = new List<string>();
+
+        public ServiceResult(bool success = false, string? message = null)
+        {
+            Success = success;
+            Message = message;
+        }
+
+        public ServiceResult AddError(string error)
+        {
+            Errors.Add(error);
+            return this;
+        }
+    }
+
     public class ServiceResult<T>
     {
         public bool Success { get; private set; }

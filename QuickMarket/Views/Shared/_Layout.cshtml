@@ -44,9 +44,9 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                                         <li><a class="dropdown-item" asp-controller="Product" asp-action="ManageProducts">Quản lý sản phẩm</a></li>
+                                        <li><a class="dropdown-item" asp-controller="User" asp-action="ManageUsers">Quản lý người dùng</a></li>
                                         @if (User.IsInRole("Admin"))
                                         {
-                                            <li><a class="dropdown-item" href="#">Quản lý người dùng</a></li>
                                             <li><a class="dropdown-item" href="#">Cài đặt hệ thống</a></li>
                                         }
                                     </ul>

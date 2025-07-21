@@ -1,0 +1,79 @@
+@model BussinessLogic.DTOs.Users.UserListDto
+
+@{
+    ViewData["Title"] = "Xóa người dùng";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger mb-3">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+    
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h2>@ViewData["Title"] - @Model.Username</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h4>Chú ý!</h4>
+                <p>
+                    Hành động này sẽ đánh dấu người dùng là đã xóa trong hệ thống. Người dùng sẽ không thể đăng nhập 
+                    và dữ liệu của họ sẽ không còn hiển thị trong hệ thống, nhưng sẽ được lưu giữ trong cơ sở dữ liệu.
+                </p>
+                <p>
+                    <strong>Bạn có chắc chắn muốn tiếp tục không?</strong>
+                </p>
+            </div>
+            
+            <dl class="row">
+                <dt class="col-sm-3">ID người dùng:</dt>
+                <dd class="col-sm-9">@Model.UserId</dd>
+                
+                <dt class="col-sm-3">Tên đăng nhập:</dt>
+                <dd class="col-sm-9">@Model.Username</dd>
+                
+                <dt class="col-sm-3">Email:</dt>
+                <dd class="col-sm-9">@Model.Email</dd>
+                
+                <dt class="col-sm-3">Vai trò:</dt>
+                <dd class="col-sm-9">@Model.RoleName</dd>
+                
+                <dt class="col-sm-3">Trạng thái hiện tại:</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Status == "Active")
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                    else if (Model.Status == "Inactive")
+                    {
+                        <span class="badge bg-warning">Vô hiệu hóa</span>
+                    }
+                    else if (Model.Status == "Suspended")
+                    {
+                        <span class="badge bg-danger">Tạm khóa</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@Model.Status</span>
+                    }
+                </dd>
+                
+                <dt class="col-sm-3">Ngày đăng ký:</dt>
+                <dd class="col-sm-9">@Model.DateCreated.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+                
+                <dt class="col-sm-3">Số sản phẩm:</dt>
+                <dd class="col-sm-9">@Model.ProductCount</dd>
+            </dl>
+            
+            <form asp-action="Delete" method="post">
+                <input type="hidden" name="id" value="@Model.UserId" />
+                <button type="submit" class="btn btn-danger">Xóa người dùng</button>
+                <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-secondary">Hủy</a>
+            </form>
+        </div>
+    </div>
+</div>
