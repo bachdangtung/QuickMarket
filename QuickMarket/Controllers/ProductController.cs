@@ -1,13 +1,10 @@
-using BussinessLogic.DTOs;
-using BussinessLogic.DTOs.Categories;
+using AutoMapper;
 using BussinessLogic.DTOs.Products;
-using BussinessLogic.Models;
 using BussinessLogic.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 using System.Security.Claims;
-using AutoMapper;
 
 namespace QuickMarket.Controllers
 {

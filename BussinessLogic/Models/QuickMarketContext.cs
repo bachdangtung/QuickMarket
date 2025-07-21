@@ -21,6 +21,8 @@ public partial class QuickMarketContext : DbContext
     public virtual DbSet<FinancialTransaction> FinancialTransactions { get; set; }
 
     public virtual DbSet<Message> Messages { get; set; }
+    
+    public virtual DbSet<ChatProduct> ChatProducts { get; set; }
 
     public virtual DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
