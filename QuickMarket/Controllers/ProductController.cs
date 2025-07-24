@@ -299,7 +299,6 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product/MyProducts
-        // Người bán xem sản phẩm của họ, Admin/Manager xem tất cả
         [Authorize(Roles = "Admin,Manager,Seller")]
         public async Task<IActionResult> MyProducts(int page = 1)
         {
@@ -321,10 +320,9 @@ namespace QuickMarket.Controllers
         }
 
         // POST: Product/AddReview
-        // Chỉ khách hàng đã mua hàng và admin/manager mới có thể đánh giá sản phẩm
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Manager,Buyer")]
+        [Authorize(Roles = "Admin,Manager,User")]
         public async Task<IActionResult> AddReview(int productId, byte rating, string comment, int? threadId = null)
         {
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
@@ -458,21 +456,31 @@ namespace QuickMarket.Controllers
 
         // GET: Product/Favorites
         [Authorize]
-        public async Task<IActionResult> Favorites(int page = 1)
+        public async Task<IActionResult> Favorites(int page = 1, string sort = "", int? category = null)
         {
             int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             int pageSize = 12;
 
-            var (items, totalCount, pageCount, currentPage, _) = await _productService.GetUserFavoritesPagedAsync(userId, page, pageSize);
+            // Lấy danh sách yêu thích với các lọc và sắp xếp
+            var result = await _productService.GetUserFavoritesPagedAsync(
+                userId, 
+                page, 
+                pageSize, 
+                sort, 
+                category
+            );
+            
             var categories = await _productService.GetAllCategoriesAsync();
 
             var productListDto = new ProductListDto
             {
-                Products = items,
+                Products = result.Items,
                 Categories = categories,
-                CurrentPage = currentPage,
-                TotalPages = pageCount,
-                Title = "Sản phẩm yêu thích"
+                CurrentPage = result.CurrentPage,
+                TotalPages = result.PageCount,
+                Title = "Quản lý sản phẩm yêu thích",
+                SortOrder = sort,
+                CategoryFilter = category
             };
 
             return View(productListDto);

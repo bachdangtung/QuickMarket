@@ -354,9 +354,9 @@ namespace Services.Implementations
             return _mapper.Map<List<ProductDto>>(favoriteProducts);
         }
 
-        public async Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize)
+        public async Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize, string sortOrder = "", int? categoryId = null)
         {
-            var pagedResult = await _productRepository.GetUserFavoritesPagedAsync(userId, page, pageSize);
+            var pagedResult = await _productRepository.GetUserFavoritesPagedAsync(userId, page, pageSize, sortOrder, categoryId);
             var productDtos = _mapper.Map<List<ProductDto>>(pagedResult.Items);
 
             return (

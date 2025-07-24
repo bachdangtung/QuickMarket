@@ -33,6 +33,6 @@ namespace Services.Interfaces
         Task<(bool Success, string? ErrorMessage)> RemoveFavoriteAsync(int userId, int productId);
         Task<bool> IsFavoriteAsync(int userId, int productId);
         Task<List<ProductDto>> GetUserFavoritesAsync(int userId);
-        Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize);
+        Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize, string sortOrder = "", int? categoryId = null);
     }
 }

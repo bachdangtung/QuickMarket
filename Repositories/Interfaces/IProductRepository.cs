@@ -24,6 +24,6 @@ namespace Repositories.Interfaces
         Task<bool> RemoveFavoriteAsync(int userId, int productId);
         Task<bool> IsFavoriteAsync(int userId, int productId);
         Task<List<Product>> GetUserFavoritesAsync(int userId);
-        Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize);
+        Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize, string sortOrder = "", int? categoryId = null);
     }
 }

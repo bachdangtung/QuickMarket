@@ -275,20 +275,37 @@ namespace Repositories.Implementations
                 .ThenInclude(p => p.Category)
                 .Include(f => f.Product)
                 .ThenInclude(p => p.ProductImages)
+                .Include(f => f.Product)
+                .ThenInclude(p => p.User)
                 .Select(f => f.Product)
                 .ToListAsync();
         }
 
-        public async Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize)
+        public async Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize, string sortOrder = "", int? categoryId = null)
         {
             var query = _context.Favorites
                 .Where(f => f.UserId == userId)
-                .Include(f => f.Product)
-                .ThenInclude(p => p.Category)
-                .Include(f => f.Product)
-                .ThenInclude(p => p.ProductImages)
-                .OrderByDescending(f => f.DateAdded)
+                .Include(f => f.Product.Category)
+                .Include(f => f.Product.ProductImages)
+                .Include(f => f.Product.User)
                 .Select(f => f.Product);
+
+
+            // Apply category filter if provided
+            if (categoryId.HasValue && categoryId > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId);
+            }
+            
+            // Apply sorting based on sortOrder parameter
+            query = sortOrder switch
+            {
+                "newest" => query.OrderByDescending(p => p.DatePosted),
+                "oldest" => query.OrderBy(p => p.DatePosted),
+                "priceAsc" => query.OrderBy(p => p.Price),
+                "priceDesc" => query.OrderByDescending(p => p.Price),
+                _ => query.OrderByDescending(p => p.DatePosted) // Default sort
+            };
 
             // Count total results
             var totalCount = await query.CountAsync();
