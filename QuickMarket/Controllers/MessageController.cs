@@ -91,5 +91,20 @@ namespace QuickMarket.Controllers
             
             return Json(chatHistory);
         }
+        
+        [HttpGet]
+        public async Task<IActionResult> GetAllChats()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || string.IsNullOrEmpty(userIdClaim.Value))
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+            
+            var currentUserId = int.Parse(userIdClaim.Value);
+            var allChats = await _messageService.GetAllChats(currentUserId);
+            
+            return Json(allChats);
+        }
     }
 }

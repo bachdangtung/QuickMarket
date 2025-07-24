@@ -34,5 +34,8 @@ namespace Services.Interfaces
         Task<bool> IsFavoriteAsync(int userId, int productId);
         Task<List<ProductDto>> GetUserFavoritesAsync(int userId);
         Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize, string sortOrder = "", int? categoryId = null);
+        
+        // Method to add a product image to the database
+        Task<bool> AddProductImageAsync(int productId, string imageUrl);
     }
 }

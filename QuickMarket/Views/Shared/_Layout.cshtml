@@ -113,11 +113,53 @@
             &copy; 2025 - QuickMarket - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+    
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <!-- Chat Box -->
+        <div id="chat-box-container" class="chat-box-container">
+            <div class="chat-box-header" id="chat-box-header">
+                <h6 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Tin nhắn</h6>
+                <div>
+                    <button class="btn btn-sm btn-link p-0 me-2" id="chat-box-minimize">
+                        <i class="bi bi-dash-lg"></i>
+                    </button>
+                    <button class="btn btn-sm btn-link p-0" id="chat-box-close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-box-body" id="chat-box-body">
+                <div class="chat-list" id="chat-box-list">
+                    <!-- Chat list will be loaded here -->
+                    <div class="text-center p-3">
+                        <div class="spinner-border text-primary spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-box-footer">
+                <a href="@Url.Action("Index", "Message")" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-chat-text me-1"></i> Xem tất cả tin nhắn
+                </a>
+            </div>
+        </div>
+        
+        <button id="chat-box-toggle" class="chat-box-toggle-btn">
+            <i class="bi bi-chat-dots"></i>
+        </button>
+    }
+    
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <!-- Toastr - For notifications -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- SignalR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.17/signalr.min.js"></script>
+    <!-- Chat Box JS -->
+    <script src="~/js/chat-box.js" asp-append-version="true"></script>
     <script>
         toastr.options = {
             "closeButton": true,

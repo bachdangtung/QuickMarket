@@ -327,16 +327,25 @@ namespace QuickMarket.Controllers
         {
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             
+            // Log thông tin đánh giá (debug)
+            System.Diagnostics.Debug.WriteLine($"Adding review: ProductId={productId}, UserId={currentUserId}, Rating={rating}, Comment={comment}, ThreadId={threadId}");
+            
             // Sử dụng service để thêm đánh giá
             var (success, errorMessage) = await _productService.AddProductReviewAsync(productId, currentUserId, rating, comment, threadId);
             
             if (!success)
             {
-                // Thêm lỗi vào ModelState
+                // Thêm lỗi vào ModelState và TempData để hiển thị trên view
                 if (!string.IsNullOrEmpty(errorMessage))
                 {
                     ModelState.AddModelError("", errorMessage);
+                    TempData["ErrorMessage"] = errorMessage;
                 }
+            }
+            else
+            {
+                // Thông báo thành công
+                TempData["SuccessMessage"] = threadId.HasValue ? "Phản hồi của bạn đã được gửi thành công." : "Đánh giá của bạn đã được gửi thành công.";
             }
             
             return RedirectToAction(nameof(Details), new { id = productId });
@@ -359,11 +368,11 @@ namespace QuickMarket.Controllers
                     
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
-                        // Since ProductDto doesn't have a ProductImages collection, just add to ImageUrls
+                        // Add to ImageUrls list in ProductDto
                         product.ImageUrls.Add(imageUrl);
                         
-                        // If you need to also create a ProductImage entity, you'll need to handle it separately
-                        // through the service layer
+                        // Create a ProductImage entity directly via repository
+                        await _productService.AddProductImageAsync(productId, imageUrl);
                     }
                 }
             }

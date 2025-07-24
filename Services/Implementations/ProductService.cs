@@ -215,7 +215,7 @@ namespace Services.Implementations
         public async Task<string> UploadProductImageAsync(IFormFile imageFile)
         {
             if (imageFile == null || imageFile.Length == 0)
-                return null;
+                return string.Empty;
                 
             return await _cloudinaryService.UploadImageAsync(imageFile);
         }
@@ -366,6 +366,11 @@ namespace Services.Implementations
                 CurrentPage: pagedResult.CurrentPage,
                 PageSize: pagedResult.PageSize
             );
+        }
+        
+        public async Task<bool> AddProductImageAsync(int productId, string imageUrl)
+        {
+            return await _productRepository.AddProductImageAsync(productId, imageUrl);
         }
     }
 }

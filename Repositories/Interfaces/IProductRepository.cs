@@ -25,5 +25,8 @@ namespace Repositories.Interfaces
         Task<bool> IsFavoriteAsync(int userId, int productId);
         Task<List<Product>> GetUserFavoritesAsync(int userId);
         Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize, string sortOrder = "", int? categoryId = null);
+        
+        // Method to add a product image to the database
+        Task<bool> AddProductImageAsync(int productId, string imageUrl);
     }
 }

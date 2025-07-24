@@ -1,6 +1,7 @@
 using BussinessLogic.DTOs;
 using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
+using BussinessLogic.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
 using System.Linq;
@@ -22,6 +23,7 @@ namespace Repositories.Implementations
                 .Include(p => p.Category)
                 .Include(p => p.User)
                 .Include(p => p.ProductImages)
+                .Where(p => p.Status == ProductStatus.Active.ToString())
                 .ToListAsync();
         }
 
@@ -32,6 +34,9 @@ namespace Repositories.Implementations
                 .Include(p => p.Category)
                 .Include(p => p.User)
                 .Include(p => p.ProductImages);
+                
+            // Chỉ hiển thị sản phẩm ở trạng thái Active (không hiển thị Sold và Inactive)
+            query = query.Where(p => p.Status == ProductStatus.Active.ToString());
 
             // Lọc theo từ khóa tìm kiếm
             if (!string.IsNullOrEmpty(filter.SearchQuery))
@@ -329,6 +334,27 @@ namespace Repositories.Implementations
                 CurrentPage = page,
                 PageSize = pageSize
             };
+        }
+        
+        public async Task<bool> AddProductImageAsync(int productId, string imageUrl)
+        {
+            try
+            {
+                var productImage = new ProductImage
+                {
+                    ProductId = productId,
+                    ImageUrl = imageUrl,
+                    DateAdded = DateTime.Now
+                };
+                
+                _context.ProductImages.Add(productImage);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
