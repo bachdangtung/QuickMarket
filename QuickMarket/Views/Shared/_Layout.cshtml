@@ -18,7 +18,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">QuickMarket</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Product" asp-action="Index">QuickMarket</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -31,9 +31,6 @@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="MyProducts">Sản phẩm của tôi</a>
-                            </li>
-                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Create">Đăng bán</a>
                             </li>
                             @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
@@ -44,9 +41,9 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                                         <li><a class="dropdown-item" asp-controller="Product" asp-action="ManageProducts">Quản lý sản phẩm</a></li>
-                                        <li><a class="dropdown-item" asp-controller="User" asp-action="ManageUsers">Quản lý người dùng</a></li>
                                         @if (User.IsInRole("Admin"))
                                         {
+                                            <li><a class="dropdown-item" asp-controller="User" asp-action="ManageUsers">Quản lý người dùng</a></li>
                                             <li><a class="dropdown-item" href="#">Cài đặt hệ thống</a></li>
                                         }
                                     </ul>
@@ -56,20 +53,39 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <span class="nav-link text-dark">Hello, @User.Identity.Name!</span>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" class="form-inline">
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Logout</button>
-                                </form>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle me-1"></i> @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="User" asp-action="Profile">
+                                            <i class="bi bi-person me-2"></i> Hồ sơ của tôi
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Product" asp-action="Favorites">
+                                            <i class="bi bi-heart me-2"></i> Sản phẩm yêu thích
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Product" asp-action="MyProducts">
+                                            <i class="bi bi-box me-2"></i> Sản phẩm của tôi
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
                         }
                         else

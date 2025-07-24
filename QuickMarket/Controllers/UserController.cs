@@ -244,5 +244,133 @@ namespace QuickMarket.Controllers
             
             return View(model);
         }
+        
+        // GET: User/Profile
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            var userProfile = await _userService.GetUserProfileAsync(userId);
+            
+            if (userProfile == null)
+            {
+                return NotFound();
+            }
+            
+            return View(userProfile);
+        }
+        
+        // GET: User/EditProfile
+        [Authorize]
+        public async Task<IActionResult> EditProfile()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            var userProfile = await _userService.GetUserProfileAsync(userId);
+            
+            if (userProfile == null)
+            {
+                return NotFound();
+            }
+            
+            var model = new UpdateProfileDto
+            {
+                UserId = userProfile.UserId,
+                Username = userProfile.Username,
+                Email = userProfile.Email
+                // Các trường PhoneNumber, FullName, Address, Bio đã bị loại bỏ
+            };
+            
+            return View(model);
+        }
+        
+        // POST: User/EditProfile
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> EditProfile(UpdateProfileDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            
+            // Đảm bảo người dùng chỉ có thể cập nhật profile của chính mình
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            if (model.UserId != userId)
+            {
+                return Forbid();
+            }
+            
+            var result = await _userService.UpdateProfileAsync(model);
+            
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
+                return RedirectToAction("Profile");
+            }
+            
+            ModelState.AddModelError(string.Empty, result.Message ?? "Có lỗi xảy ra khi cập nhật thông tin!");
+            return View(model);
+        }
+        
+        // POST: User/UploadProfileImage
+        // Giữ lại phương thức này nhưng thay đổi để nó chỉ tải lên ảnh mà không lưu vào database
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> UploadProfileImage(IFormFile imageFile)
+        {
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                return Json(new { success = false, message = "Vui lòng chọn một file ảnh" });
+            }
+            
+            // Kiểm tra định dạng file
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var fileExtension = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return Json(new { success = false, message = "Chỉ chấp nhận file ảnh định dạng jpg, jpeg, png hoặc gif" });
+            }
+            
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            
+            // Chỉ tải lên ảnh không lưu trữ URL trong model User
+            var result = await _userService.UploadProfileImageAsync(userId, imageFile);
+            
+            if (result.Success)
+            {
+                return Json(new { success = true, imageUrl = result.Data });
+            }
+            
+            return Json(new { success = false, message = result.Message ?? "Có lỗi xảy ra khi tải ảnh lên" });
+        }
+        
+        // POST: User/ChangePassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
+        {
+            if (string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(newPassword) || string.IsNullOrEmpty(confirmPassword))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập đầy đủ thông tin" });
+            }
+            
+            if (newPassword != confirmPassword)
+            {
+                return Json(new { success = false, message = "Mật khẩu mới không khớp" });
+            }
+            
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            var result = await _userService.ChangePasswordAsync(userId, currentPassword, newPassword);
+            
+            if (result.Success)
+            {
+                return Json(new { success = true, message = "Thay đổi mật khẩu thành công" });
+            }
+            
+            return Json(new { success = false, message = result.Message ?? "Có lỗi xảy ra khi thay đổi mật khẩu" });
+        }
     }
 }

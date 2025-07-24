@@ -12,5 +12,6 @@ namespace BussinessLogic.DTOs.Products
         public string? SortOrder { get; set; }
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
+        public string? Title { get; set; }
     }
 }

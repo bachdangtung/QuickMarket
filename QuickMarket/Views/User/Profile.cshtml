@@ -1,0 +1,163 @@
+@model BussinessLogic.DTOs.Users.UserProfileDto
+
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Thông tin cơ bản về người dùng -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="position-relative mb-4 mx-auto" style="width: 150px; height: 150px;">
+                        <!-- Luôn sử dụng hình ảnh mặc định vì model User không có trường AvatarUrl -->
+                        <img src="/images/default-avatar.png" class="rounded-circle img-fluid" alt="@Model.Username"
+                             style="width: 150px; height: 150px; object-fit: cover;" />
+                    </div>
+                    <h5 class="card-title mb-0">@Model.Username</h5>
+                    <div class="text-muted">@Model.RoleName</div>
+                    <div class="mt-2 mb-3">
+                        <span class="badge bg-@(Model.Status == "Active" ? "success" : "danger")">
+                            @Model.Status
+                        </span>
+                    </div>
+                    <a asp-action="EditProfile" class="btn btn-primary">Chỉnh sửa hồ sơ</a>
+                </div>
+            </div>
+
+            <!-- Thông tin liên hệ -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Thông tin liên hệ</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong><i class="bi bi-envelope"></i> Email:</strong>
+                        <p class="text-muted">@Model.Email</p>
+                    </div>
+                    <div>
+                        <strong><i class="bi bi-calendar"></i> Ngày tham gia:</strong>
+                        <p class="text-muted">@Model.DateCreated.ToString("dd/MM/yyyy")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin chi tiết -->
+        <div class="col-md-8">
+            <!-- Loại bỏ phần Giới thiệu vì không có trường Bio trong model User -->
+
+            <!-- Thống kê -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Thống kê</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 col-md-3">
+                            <div class="text-center mb-3">
+                                <h3 class="mb-0">@Model.ProductCount</h3>
+                                <div class="text-muted small">Sản phẩm đăng bán</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center mb-3">
+                                <h3 class="mb-0">@Model.SoldProductsCount</h3>
+                                <div class="text-muted small">Đã bán</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center mb-3">
+                                <h3 class="mb-0">@Model.FavoritesCount</h3>
+                                <div class="text-muted small">Sản phẩm yêu thích</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-center">
+                                <h3 class="mb-0">
+                                    @if (Model.Rating > 0)
+                                    {
+                                        <span class="text-warning">@Model.Rating.ToString("0.0")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </h3>
+                                <div class="text-muted small">Đánh giá</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sản phẩm gần đây -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Sản phẩm của tôi</h5>
+                    <a asp-controller="Product" asp-action="MyProducts" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentProducts != null && Model.RecentProducts.Any())
+                    {
+                        <div class="row row-cols-1 row-cols-md-2 g-3">
+                            @foreach (var product in Model.RecentProducts)
+                            {
+                                <div class="col">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="row g-0">
+                                            <div class="col-4">
+                                                @if (product.ImageUrls != null && product.ImageUrls.Any())
+                                                {
+                                                    <img src="@product.ImageUrls.First()" class="img-fluid rounded-start" alt="@product.Name"
+                                                         style="height: 100%; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <img src="/images/no-image.png" class="img-fluid rounded-start" alt="@product.Name"
+                                                         style="height: 100%; object-fit: cover;">
+                                                }
+                                            </div>
+                                            <div class="col-8">
+                                                <div class="card-body py-2">
+                                                    <h6 class="card-title text-truncate">
+                                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId"
+                                                           class="text-decoration-none text-dark">
+                                                            @product.Name
+                                                        </a>
+                                                    </h6>
+                                                    <p class="card-text text-danger fw-bold mb-1">@product.Price.ToString("N0") VNĐ</p>
+                                                    <p class="card-text small mb-0"><span class="badge bg-secondary">@product.CategoryName</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Bạn chưa có sản phẩm nào.</p>
+                        <a asp-controller="Product" asp-action="Create" class="btn btn-success">Đăng sản phẩm mới</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Hiển thị thông báo thành công (nếu có)
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                toastr.success('@TempData["SuccessMessage"]');
+                </text>
+            }
+        });
+    </script>
+}

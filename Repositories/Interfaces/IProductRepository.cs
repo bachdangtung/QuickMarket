@@ -18,5 +18,12 @@ namespace Repositories.Interfaces
         Task<List<ProductCategory>> GetAllCategoriesAsync();
         Task<ProductCategory?> GetCategoryByIdAsync(int categoryId);
         Task<ProductImage?> GetProductImageByIdAsync(int imageId);
+        
+        // Favorite methods
+        Task<bool> AddFavoriteAsync(int userId, int productId);
+        Task<bool> RemoveFavoriteAsync(int userId, int productId);
+        Task<bool> IsFavoriteAsync(int userId, int productId);
+        Task<List<Product>> GetUserFavoritesAsync(int userId);
+        Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize);
     }
 }

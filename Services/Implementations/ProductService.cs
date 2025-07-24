@@ -311,5 +311,61 @@ namespace Services.Implementations
                 return (Success: false, ErrorMessage: $"Error adding review: {ex.Message}");
             }
         }
+        
+        // Favorite methods implementation
+        public async Task<(bool Success, string? ErrorMessage)> AddFavoriteAsync(int userId, int productId)
+        {
+            try
+            {
+                var result = await _productRepository.AddFavoriteAsync(userId, productId);
+                return result 
+                    ? (Success: true, ErrorMessage: null) 
+                    : (Success: false, ErrorMessage: "Failed to add favorite");
+            }
+            catch (Exception ex)
+            {
+                return (Success: false, ErrorMessage: $"Error adding favorite: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool Success, string? ErrorMessage)> RemoveFavoriteAsync(int userId, int productId)
+        {
+            try
+            {
+                var result = await _productRepository.RemoveFavoriteAsync(userId, productId);
+                return result 
+                    ? (Success: true, ErrorMessage: null) 
+                    : (Success: false, ErrorMessage: "Failed to remove favorite");
+            }
+            catch (Exception ex)
+            {
+                return (Success: false, ErrorMessage: $"Error removing favorite: {ex.Message}");
+            }
+        }
+
+        public async Task<bool> IsFavoriteAsync(int userId, int productId)
+        {
+            return await _productRepository.IsFavoriteAsync(userId, productId);
+        }
+
+        public async Task<List<ProductDto>> GetUserFavoritesAsync(int userId)
+        {
+            var favoriteProducts = await _productRepository.GetUserFavoritesAsync(userId);
+            return _mapper.Map<List<ProductDto>>(favoriteProducts);
+        }
+
+        public async Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize)
+        {
+            var pagedResult = await _productRepository.GetUserFavoritesPagedAsync(userId, page, pageSize);
+            var productDtos = _mapper.Map<List<ProductDto>>(pagedResult.Items);
+
+            return (
+                Items: productDtos,
+                TotalCount: pagedResult.TotalCount,
+                PageCount: pagedResult.PageCount,
+                CurrentPage: pagedResult.CurrentPage,
+                PageSize: pagedResult.PageSize
+            );
+        }
     }
 }

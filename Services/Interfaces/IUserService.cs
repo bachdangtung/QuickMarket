@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using BussinessLogic.DTOs;
 using BussinessLogic.DTOs.Users;
 using BussinessLogic.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace Services.Interfaces
 {
@@ -14,5 +15,11 @@ namespace Services.Interfaces
         Task<ServiceResult> UpdateUserRoleAsync(int userId, int roleId);
         Task<ServiceResult> CreateUserAsync(CreateUserDto model);
         Task<bool> HasAdminUserAsync();
+        
+        // User Profile methods
+        Task<UserProfileDto?> GetUserProfileAsync(int userId);
+        Task<ServiceResult> UpdateProfileAsync(UpdateProfileDto model);
+        Task<ServiceResult> ChangePasswordAsync(int userId, string currentPassword, string newPassword);
+        Task<ServiceResult> UploadProfileImageAsync(int userId, IFormFile imageFile);
     }
 }

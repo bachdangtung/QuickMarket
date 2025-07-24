@@ -455,5 +455,72 @@ namespace QuickMarket.Controllers
 
             return Json(new { success = true });
         }
+
+        // GET: Product/Favorites
+        [Authorize]
+        public async Task<IActionResult> Favorites(int page = 1)
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            int pageSize = 12;
+
+            var (items, totalCount, pageCount, currentPage, _) = await _productService.GetUserFavoritesPagedAsync(userId, page, pageSize);
+            var categories = await _productService.GetAllCategoriesAsync();
+
+            var productListDto = new ProductListDto
+            {
+                Products = items,
+                Categories = categories,
+                CurrentPage = currentPage,
+                TotalPages = pageCount,
+                Title = "Sản phẩm yêu thích"
+            };
+
+            return View(productListDto);
+        }
+
+        // POST: Product/AddFavorite
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> AddFavorite(int productId)
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+
+            var (success, errorMessage) = await _productService.AddFavoriteAsync(userId, productId);
+
+            if (!success)
+            {
+                return Json(new { success = false, message = errorMessage ?? "Không thể thêm vào danh sách yêu thích" });
+            }
+
+            return Json(new { success = true });
+        }
+
+        // POST: Product/RemoveFavorite
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> RemoveFavorite(int productId)
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+
+            var (success, errorMessage) = await _productService.RemoveFavoriteAsync(userId, productId);
+
+            if (!success)
+            {
+                return Json(new { success = false, message = errorMessage ?? "Không thể xóa khỏi danh sách yêu thích" });
+            }
+
+            return Json(new { success = true });
+        }
+
+        // GET: Product/IsFavorite
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> IsFavorite(int productId)
+        {
+            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+            var isFavorite = await _productService.IsFavoriteAsync(userId, productId);
+
+            return Json(new { isFavorite });
+        }
     }
 }

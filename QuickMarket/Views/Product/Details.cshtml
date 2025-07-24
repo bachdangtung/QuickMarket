@@ -77,11 +77,15 @@
                 <a asp-action="Index" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Quay lại
                 </a>
-                @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value != Model.UserId.ToString())
+                @if (User.Identity != null && User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value != Model.UserId.ToString())
                 {
                     <a href="@Url.Action("Index", "Message", new { userId = Model.UserId, productId = Model.ProductId })" class="btn btn-primary">
                         <i class="bi bi-chat-dots"></i> Chat với người bán
                     </a>
+                    
+                    <button id="favoriteBtn" class="btn btn-outline-danger" data-product-id="@Model.ProductId">
+                        <i class="far fa-heart"></i> Yêu thích
+                    </button>
                 }
             </div>
         </div>
@@ -225,6 +229,9 @@
 </div>
 
 @section Scripts {
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="~/js/product-favorites.js"></script>
+    
     <script>
         // Xử lý hiển thị hình ảnh thu nhỏ khi được click
         function showImage(index) {
@@ -352,5 +359,11 @@
         .rate input:checked ~ label:hover,
         .rate input:checked ~ label:hover ~ label,
         .rate label:hover ~ input:checked ~ label { color: #ffdb70; }
+        
+        /* Favorite button styles */
+        .favorite-active {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
     </style>
 }

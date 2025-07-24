@@ -1,0 +1,114 @@
+@model BussinessLogic.DTOs.Users.UpdateProfileDto
+
+@{
+    ViewData["Title"] = "Chỉnh sửa hồ sơ";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Chỉnh sửa thông tin cá nhân</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditProfile" method="post">
+                        <input type="hidden" asp-for="UserId" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <!-- Đã loại bỏ phần hình ảnh đại diện vì không có trường này trong model User -->
+                        
+                        <!-- Thông tin cơ bản -->
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label">Tên đăng nhập</label>
+                            <input asp-for="Username" class="form-control" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        
+                        <!-- Đã loại bỏ các trường FullName, PhoneNumber, Address, Bio vì không có trong model User -->
+                        
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                        <a asp-action="Profile" class="btn btn-secondary">Quay lại</a>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Thay đổi mật khẩu -->
+            <div class="card mt-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Thay đổi mật khẩu</h5>
+                </div>
+                <div class="card-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required
+                                   minlength="6" maxlength="100">
+                            <div class="form-text">Mật khẩu phải có ít nhất 6 ký tự</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Đã loại bỏ phần xử lý tải lên ảnh đại diện vì không có trường AvatarUrl trong model User
+            
+            // Xử lý đổi mật khẩu
+            $("#changePasswordForm").submit(function(e) {
+                e.preventDefault();
+                
+                var currentPassword = $("#currentPassword").val();
+                var newPassword = $("#newPassword").val();
+                var confirmPassword = $("#confirmPassword").val();
+                
+                if (newPassword !== confirmPassword) {
+                    toastr.error('Mật khẩu mới không khớp');
+                    return;
+                }
+                
+                $.ajax({
+                    url: '@Url.Action("ChangePassword", "User")',
+                    type: 'POST',
+                    data: {
+                        currentPassword: currentPassword,
+                        newPassword: newPassword,
+                        confirmPassword: confirmPassword
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            // Xóa form sau khi thành công
+                            $("#changePasswordForm")[0].reset();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Có lỗi xảy ra khi kết nối với máy chủ');
+                    }
+                });
+            });
+        });
+    </script>
+}

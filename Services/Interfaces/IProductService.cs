@@ -1,5 +1,6 @@
 using BussinessLogic.DTOs;
 using BussinessLogic.DTOs.Categories;
+using BussinessLogic.DTOs.Favorites;
 using BussinessLogic.DTOs.Products;
 using BussinessLogic.Models;
 using Microsoft.AspNetCore.Http;
@@ -26,5 +27,12 @@ namespace Services.Interfaces
         Task<bool> DeleteProductImageAsync(string imageUrl);
         Task<ProductImageDto?> GetImageDetailsAsync(int imageId);
         Task<(bool Success, string? ErrorMessage)> AddProductReviewAsync(int productId, int userId, byte rating, string comment, int? threadId = null);
+        
+        // Favorite methods
+        Task<(bool Success, string? ErrorMessage)> AddFavoriteAsync(int userId, int productId);
+        Task<(bool Success, string? ErrorMessage)> RemoveFavoriteAsync(int userId, int productId);
+        Task<bool> IsFavoriteAsync(int userId, int productId);
+        Task<List<ProductDto>> GetUserFavoritesAsync(int userId);
+        Task<(List<ProductDto> Items, int TotalCount, int PageCount, int CurrentPage, int PageSize)> GetUserFavoritesPagedAsync(int userId, int page, int pageSize);
     }
 }

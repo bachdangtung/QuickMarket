@@ -210,5 +210,108 @@ namespace Repositories.Implementations
                 .Include(pi => pi.Product)
                 .FirstOrDefaultAsync(pi => pi.ImageId == imageId);
         }
+
+        // Favorite methods implementation
+        public async Task<bool> AddFavoriteAsync(int userId, int productId)
+        {
+            try
+            {
+                // Check if the favorite already exists
+                var existingFavorite = await _context.Favorites
+                    .FirstOrDefaultAsync(f => f.UserId == userId && f.ProductId == productId);
+
+                if (existingFavorite != null)
+                    return true; // Already a favorite
+
+                // Create new favorite
+                var favorite = new Favorite
+                {
+                    UserId = userId,
+                    ProductId = productId,
+                    DateAdded = DateTime.Now
+                };
+
+                _context.Favorites.Add(favorite);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveFavoriteAsync(int userId, int productId)
+        {
+            try
+            {
+                var favorite = await _context.Favorites
+                    .FirstOrDefaultAsync(f => f.UserId == userId && f.ProductId == productId);
+
+                if (favorite == null)
+                    return false;
+
+                _context.Favorites.Remove(favorite);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> IsFavoriteAsync(int userId, int productId)
+        {
+            return await _context.Favorites
+                .AnyAsync(f => f.UserId == userId && f.ProductId == productId);
+        }
+
+        public async Task<List<Product>> GetUserFavoritesAsync(int userId)
+        {
+            return await _context.Favorites
+                .Where(f => f.UserId == userId)
+                .Include(f => f.Product)
+                .ThenInclude(p => p.Category)
+                .Include(f => f.Product)
+                .ThenInclude(p => p.ProductImages)
+                .Select(f => f.Product)
+                .ToListAsync();
+        }
+
+        public async Task<PagedResult<Product>> GetUserFavoritesPagedAsync(int userId, int page, int pageSize)
+        {
+            var query = _context.Favorites
+                .Where(f => f.UserId == userId)
+                .Include(f => f.Product)
+                .ThenInclude(p => p.Category)
+                .Include(f => f.Product)
+                .ThenInclude(p => p.ProductImages)
+                .OrderByDescending(f => f.DateAdded)
+                .Select(f => f.Product);
+
+            // Count total results
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var skipAmount = (page - 1) * pageSize;
+            var pagedData = await query
+                .Skip(skipAmount)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // Calculate total pages
+            var pageCount = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            // Return paged result
+            return new PagedResult<Product>
+            {
+                Items = pagedData,
+                TotalCount = totalCount,
+                PageCount = pageCount,
+                CurrentPage = page,
+                PageSize = pageSize
+            };
+        }
     }
 }
