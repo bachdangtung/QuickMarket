@@ -327,7 +327,6 @@ namespace QuickMarket.Controllers
         {
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             
-            // Log thông tin đánh giá (debug)
             System.Diagnostics.Debug.WriteLine($"Adding review: ProductId={productId}, UserId={currentUserId}, Rating={rating}, Comment={comment}, ThreadId={threadId}");
             
             // Sử dụng service để thêm đánh giá
@@ -386,10 +385,7 @@ namespace QuickMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteImage(int imageId)
         {
-            // First find which product has this image - we need to refactor this approach
-            // since ProductDto doesn't have direct access to image IDs
             
-            // Instead, we should get the image information from a dedicated service method
             var imageDetails = await _productService.GetImageDetailsAsync(imageId);
             if (imageDetails == null)
             {

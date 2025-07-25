@@ -61,7 +61,7 @@ builder.Services.AddAuthentication(options =>
     options.Events.OnRemoteFailure = context =>
     {
         context.Response.Redirect("/Account/Login");
-        context.HandleResponse(); // Ng�n ASP.NET n�m exception
+        context.HandleResponse();
         return Task.CompletedTask;
     };
 });
