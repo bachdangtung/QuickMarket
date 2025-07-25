@@ -113,6 +113,15 @@
                 </div>
             }
             
+            @{
+                int totalReviews = Model.Reviews?.Count ?? 0;
+                int commentCount = Model.Reviews?.Count(r => r.Rating == 0) ?? 0;
+                int ratingCount = Model.Reviews?.Count(r => r.Rating > 0) ?? 0;
+            }
+            <div class="text-muted mb-2">
+                Có @totalReviews đánh giá/bình luận (@ratingCount đánh giá, @commentCount bình luận)
+            </div>
+            
             @if (Model.Reviews != null && Model.Reviews.Any())
             {
                 foreach (var review in Model.Reviews.OrderByDescending(r => r.ReviewDate))
@@ -121,16 +130,23 @@
                         <div class="card-header bg-light d-flex justify-content-between">
                             <div>
                                 <strong>@review.UserName</strong>
-                                <div class="text-warning">
-                                    @for (int i = 0; i < review.Rating; i++)
-                                    {
-                                        <i class="bi bi-star-fill"></i>
-                                    }
-                                    @for (int i = review.Rating; i < 5; i++)
-                                    {
-                                        <i class="bi bi-star"></i>
-                                    }
-                                </div>
+                                @if(review.Rating > 0)
+                                {
+                                    <div class="text-warning">
+                                        @for (int i = 0; i < review.Rating; i++)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        @for (int i = review.Rating; i < 5; i++)
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Bình luận</span>
+                                }
                             </div>
                             <small class="text-muted">@review.ReviewDate.ToString("dd/MM/yyyy HH:mm")</small>
                         </div>
@@ -167,7 +183,7 @@
                                     <form asp-action="AddReview" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@Model.ProductId" />
-                                        <input type="hidden" name="rating" value="5" />
+                                        <input type="hidden" name="rating" value="0" />
                                         <input type="hidden" name="threadId" value="@review.ReviewId" />
                                         
                                         <div class="mb-3">
@@ -192,42 +208,68 @@
 
             @if (User.Identity != null && User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value != Model.UserId.ToString())
             {
-                <div class="card mt-4">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">Đánh giá của bạn</h5>
-                    </div>
-                    <div class="card-body">
-                        <form asp-action="AddReview" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="productId" value="@Model.ProductId" />
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Đánh giá</label>
-                                <div class="rating">
-                                    <div class="star-rating">
-                                        <input type="radio" id="star5" name="rating" value="5" checked />
-                                        <label for="star5" title="5 sao"><i class="bi bi-star-fill"></i></label>
-                                        <input type="radio" id="star4" name="rating" value="4" />
-                                        <label for="star4" title="4 sao"><i class="bi bi-star-fill"></i></label>
-                                        <input type="radio" id="star3" name="rating" value="3" />
-                                        <label for="star3" title="3 sao"><i class="bi bi-star-fill"></i></label>
-                                        <input type="radio" id="star2" name="rating" value="2" />
-                                        <label for="star2" title="2 sao"><i class="bi bi-star-fill"></i></label>
-                                        <input type="radio" id="star1" name="rating" value="1" />
-                                        <label for="star1" title="1 sao"><i class="bi bi-star-fill"></i></label>
+                @if (ViewBag.HasPurchased == true)
+                {
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Đánh giá của bạn</h5>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="AddReview" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@Model.ProductId" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Đánh giá</label>
+                                    <div class="rating">
+                                        <div class="star-rating">
+                                            <input type="radio" id="star5" name="rating" value="5" checked />
+                                            <label for="star5" title="5 sao"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" id="star4" name="rating" value="4" />
+                                            <label for="star4" title="4 sao"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" id="star3" name="rating" value="3" />
+                                            <label for="star3" title="3 sao"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" id="star2" name="rating" value="2" />
+                                            <label for="star2" title="2 sao"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" id="star1" name="rating" value="1" />
+                                            <label for="star1" title="1 sao"><i class="bi bi-star-fill"></i></label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Nhận xét của bạn</label>
-                                <textarea name="comment" class="form-control" rows="3" placeholder="Nhập nhận xét của bạn..." required></textarea>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
-                        </form>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Nhận xét của bạn</label>
+                                    <textarea name="comment" class="form-control" rows="3" placeholder="Nhập nhận xét của bạn..." required></textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Bình luận của bạn</h5>
+                            <small class="text-muted">(Bạn cần mua sản phẩm để có thể đánh giá sao)</small>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="AddReview" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@Model.ProductId" />
+                                <input type="hidden" name="rating" value="0" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Bình luận của bạn</label>
+                                    <textarea name="comment" class="form-control" rows="3" placeholder="Nhập bình luận của bạn..." required></textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Gửi bình luận</button>
+                            </form>
+                        </div>
+                    </div>
+                }
             }
         </div>
         

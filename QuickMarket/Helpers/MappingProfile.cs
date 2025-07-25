@@ -14,7 +14,8 @@ namespace QuickMarket.Helpers
             CreateMap<Product, ProductDto>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.CategoryName : null))
                 .ForMember(dest => dest.SellerName, opt => opt.MapFrom(src => src.User != null ? src.User.Username : null))
-                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => src.ProductImages.Select(img => img.ImageUrl)));
+                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => src.ProductImages.Select(img => img.ImageUrl)))
+                .ForMember(dest => dest.Reviews, opt => opt.MapFrom(src => src.ProductReviews));
             
             // DTO to Entity mappings (DTO -> Model)
             CreateMap<ProductDto, Product>()

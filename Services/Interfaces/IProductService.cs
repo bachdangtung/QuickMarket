@@ -37,5 +37,8 @@ namespace Services.Interfaces
         
         // Method to add a product image to the database
         Task<bool> AddProductImageAsync(int productId, string imageUrl);
+        
+        // Method to check if a user has purchased a product
+        Task<bool> HasUserPurchasedProductAsync(int userId, int productId);
     }
 }

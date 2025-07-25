@@ -70,12 +70,21 @@ namespace QuickMarket.Controllers
             // Convert ProductDto to ProductCreateUpdateDto for the view
             var createUpdateDto = _mapper.Map<ProductCreateUpdateDto>(productDto);
             
+            // Kiểm tra xem người dùng đã mua sản phẩm này chưa
+            ViewBag.HasPurchased = false; // Mặc định là chưa mua
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+                // Kiểm tra xem người dùng đã mua sản phẩm này chưa
+                ViewBag.HasPurchased = await _productService.HasUserPurchasedProductAsync(userId, id);
+            }
+            
             return View(createUpdateDto);
         }
 
         // GET: Product/Create
         // Chỉ người bán, người quản lý và admin mới có thể tạo sản phẩm
-        [Authorize(Roles = "Admin,Manager,Seller")]
+        [Authorize(Roles = "Admin,Manager,Seller,User")]
         public async Task<IActionResult> Create()
         {
             ViewBag.Categories = await _productService.GetAllCategoriesAsync();
@@ -85,7 +94,7 @@ namespace QuickMarket.Controllers
         // POST: Product/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Manager,Seller")]
+        [Authorize(Roles = "Admin,Manager,Seller,User")]
         public async Task<IActionResult> Create(ProductCreateUpdateDto productDto, List<IFormFile> imageFiles)
         {
             if (ModelState.IsValid)
@@ -299,7 +308,7 @@ namespace QuickMarket.Controllers
         }
 
         // GET: Product/MyProducts
-        [Authorize(Roles = "Admin,Manager,Seller")]
+        [Authorize(Roles = "Admin,Manager,Seller,User")]
         public async Task<IActionResult> MyProducts(int page = 1)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
@@ -327,7 +336,25 @@ namespace QuickMarket.Controllers
         {
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             
-            System.Diagnostics.Debug.WriteLine($"Adding review: ProductId={productId}, UserId={currentUserId}, Rating={rating}, Comment={comment}, ThreadId={threadId}");
+            // Kiểm tra xem người dùng đã mua sản phẩm này chưa
+            bool hasPurchased = await _productService.HasUserPurchasedProductAsync(currentUserId, productId);
+            
+            // Người dùng không được phép đánh giá sản phẩm với rating nếu chưa mua
+            if (!hasPurchased && rating > 0)
+            {
+                // Người dùng chưa mua sản phẩm nhưng đang cố gắng đánh giá bằng sao
+                TempData["ErrorMessage"] = "Bạn cần mua sản phẩm này trước khi có thể đánh giá với số sao.";
+                return RedirectToAction(nameof(Details), new { id = productId });
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"Controller - Adding review: ProductId={productId}, UserId={currentUserId}, Rating={rating}, Comment={comment}, ThreadId={threadId}");
+            
+            // Ensure comment is not null
+            if (string.IsNullOrEmpty(comment))
+            {
+                TempData["ErrorMessage"] = "Bình luận không thể để trống.";
+                return RedirectToAction(nameof(Details), new { id = productId });
+            }
             
             // Sử dụng service để thêm đánh giá
             var (success, errorMessage) = await _productService.AddProductReviewAsync(productId, currentUserId, rating, comment, threadId);
@@ -344,9 +371,28 @@ namespace QuickMarket.Controllers
             else
             {
                 // Thông báo thành công
-                TempData["SuccessMessage"] = threadId.HasValue ? "Phản hồi của bạn đã được gửi thành công." : "Đánh giá của bạn đã được gửi thành công.";
+                if (threadId.HasValue)
+                {
+                    TempData["SuccessMessage"] = "Phản hồi của bạn đã được gửi thành công.";
+                }
+                else if (rating > 0)
+                {
+                    TempData["SuccessMessage"] = "Đánh giá của bạn đã được gửi thành công.";
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = "Bình luận của bạn đã được gửi thành công.";
+                }
+                
+                // Add debug information and append a timestamp to force a fresh reload
+                System.Diagnostics.Debug.WriteLine($"Review added successfully: Rating={rating}, Comment={comment}, ThreadId={threadId}");
+                
+                // Add a timestamp to the redirect to force a fresh reload
+                string timestamp = DateTime.Now.Ticks.ToString();
+                return RedirectToAction(nameof(Details), new { id = productId, t = timestamp });
             }
             
+            // If we got here, there was an error
             return RedirectToAction(nameof(Details), new { id = productId });
         }
 

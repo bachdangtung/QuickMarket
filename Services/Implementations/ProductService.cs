@@ -80,14 +80,33 @@ namespace Services.Implementations
 
         public async Task<ProductDto?> GetProductByIdWithNestedReviewsAsync(int productId)
         {
+            // Debug info
+            System.Diagnostics.Debug.WriteLine($"Fetching product with ID: {productId} with reviews");
+            
             var product = await _productRepository.GetProductByIdAsync(productId);
             if (product == null) return null;
             
+            // Debug info
+            System.Diagnostics.Debug.WriteLine($"Product found with {product.ProductReviews?.Count ?? 0} reviews");
+            
             var productDto = _mapper.Map<ProductDto>(product);
+            
+            // Debug info
+            System.Diagnostics.Debug.WriteLine($"After mapping - DTO has {productDto.Reviews?.Count ?? 0} reviews");
+            
+            // Initialize if null
+            if (productDto.Reviews == null)
+            {
+                productDto.Reviews = new List<ProductReviewDto>();
+                System.Diagnostics.Debug.WriteLine("Reviews collection was null, initialized empty list");
+            }
             
             // Tách riêng reviews gốc (không có ThreadId) và replies (có ThreadId)
             var mainReviews = productDto.Reviews.Where(r => r.ThreadId == null).ToList();
             var replies = productDto.Reviews.Where(r => r.ThreadId != null).ToList();
+            
+            // Debug info
+            System.Diagnostics.Debug.WriteLine($"Split into {mainReviews.Count} main reviews and {replies.Count} replies");
 
             // Gán replies vào review gốc tương ứng
             foreach (var reply in replies)
@@ -251,8 +270,8 @@ namespace Services.Implementations
         {
             try
             {
-                // Validate the rating
-                if (rating < 1 || rating > 5)
+                // Validate the rating - allow 0 for comments without rating or replies
+                if (rating != 0 && (rating < 1 || rating > 5))
                 {
                     return (Success: false, ErrorMessage: "Rating must be between 1 and 5 stars");
                 }
@@ -267,10 +286,11 @@ namespace Services.Implementations
                 // If this is a root review (not a reply)
                 if (!threadId.HasValue)
                 {
-                    // Check if user already reviewed this product
-                    if (product.ProductReviews.Any(r => r.UserId == userId && r.ThreadId == null))
+                    // Only restrict if user is trying to add a review with rating (stars)
+                    // Allow multiple comments (rating=0) from the same user
+                    if (rating > 0 && product.ProductReviews.Any(r => r.UserId == userId && r.ThreadId == null && r.Rating > 0))
                     {
-                        return (Success: false, ErrorMessage: "You have already reviewed this product");
+                        return (Success: false, ErrorMessage: "You have already rated this product with stars");
                     }
 
                     // Check if user is reviewing their own product
@@ -280,6 +300,9 @@ namespace Services.Implementations
                     }
                 }
 
+                // Add debug info
+                System.Diagnostics.Debug.WriteLine($"Creating review: ProductId={productId}, UserId={userId}, Rating={rating}, Comment={comment}, ThreadId={threadId}");
+                
                 // Create the review
                 var review = new ProductReview
                 {
@@ -291,11 +314,14 @@ namespace Services.Implementations
                     ThreadId = threadId
                 };
 
-                // Add to product reviews
-                product.ProductReviews.Add(review);
+                // Create a separate review instead of adding to the product collection
+                // This avoids potential EF tracking issues
                 
-                // Save changes
-                var result = await _productRepository.UpdateProductAsync(product);
+                // Debug info before saving
+                System.Diagnostics.Debug.WriteLine($"Creating a new review with ProductId: {productId}, UserId: {userId}");
+                
+                // Save the review directly to ensure it's properly saved and tracked
+                var result = await _productRepository.AddProductReviewAsync(review);
 
                 if (result)
                 {
@@ -371,6 +397,13 @@ namespace Services.Implementations
         public async Task<bool> AddProductImageAsync(int productId, string imageUrl)
         {
             return await _productRepository.AddProductImageAsync(productId, imageUrl);
+        }
+        
+        public async Task<bool> HasUserPurchasedProductAsync(int userId, int productId)
+        {
+            // Kiểm tra xem người dùng đã mua sản phẩm này chưa
+            // Dựa vào bảng Transaction để kiểm tra
+            return await _productRepository.HasUserPurchasedProductAsync(userId, productId);
         }
     }
 }

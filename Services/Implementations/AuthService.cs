@@ -154,7 +154,6 @@ namespace Services.Implementations
         }
         
         // Password Reset Methods
-        
         public async Task<string> GeneratePasswordResetTokenAsync(string email)
         {
             var user = await _userRepository.GetUserByEmailAsync(email);

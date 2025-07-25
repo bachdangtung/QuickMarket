@@ -356,5 +356,54 @@ namespace Repositories.Implementations
                 return false;
             }
         }
+        
+        public async Task<bool> HasUserPurchasedProductAsync(int userId, int productId)
+        {
+            try
+            {
+                // Kiểm tra trong bảng Transaction xem người dùng đã mua sản phẩm này chưa
+                // Trạng thái "Completed" hoặc tương tự cho biết giao dịch đã hoàn thành
+                return await _context.Transactions.AnyAsync(t => 
+                    t.BuyerId == userId && 
+                    t.ProductId == productId && 
+                    (t.Status == "Completed" || t.Status == "Success" || t.Status == "Delivered"));
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        public async Task<bool> AddProductReviewAsync(ProductReview review)
+        {
+            try
+            {
+                // Make sure we have the required properties
+                if (review.ProductId == null || review.UserId == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Review has null ProductId or UserId");
+                    return false;
+                }
+                
+                // Add the review directly to the database
+                _context.ProductReviews.Add(review);
+                
+                // Debug before saving
+                System.Diagnostics.Debug.WriteLine($"Saving review for Product {review.ProductId}, User {review.UserId}, Comment: {review.Comment?.Substring(0, Math.Min(20, review.Comment?.Length ?? 0))}...");
+                
+                // Save changes
+                await _context.SaveChangesAsync();
+                
+                // Debug info
+                System.Diagnostics.Debug.WriteLine($"Review saved successfully with ID: {review.ReviewId}");
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving review: {ex.Message}");
+                return false;
+            }
+        }
     }
 }
