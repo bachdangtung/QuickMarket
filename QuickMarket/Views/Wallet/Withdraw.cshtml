@@ -1,0 +1,68 @@
+@model BussinessLogic.DTOs.Wallet.WithdrawRequestDto
+@{
+    ViewData["Title"] = "Rút tiền";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Rút tiền về tài khoản ngân hàng</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Withdraw" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Amount" class="form-label">Số tiền (VND)</label>
+                            <input asp-for="Amount" class="form-control" />
+                            <span asp-validation-for="Amount" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="BankName" class="form-label">Ngân hàng</label>
+                            <select asp-for="BankName" class="form-select">
+                                <option value="">-- Chọn ngân hàng --</option>
+                                <option value="VCB">Vietcombank</option>
+                                <option value="TCB">Techcombank</option>
+                                <option value="VTB">Vietinbank</option>
+                                <option value="BIDV">BIDV</option>
+                                <option value="ACB">ACB</option>
+                                <option value="TPB">TPBank</option>
+                                <option value="MB">MB Bank</option>
+                                <option value="Other">Ngân hàng khác</option>
+                            </select>
+                            <span asp-validation-for="BankName" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="AccountNumber" class="form-label">Số tài khoản</label>
+                            <input asp-for="AccountNumber" class="form-control" />
+                            <span asp-validation-for="AccountNumber" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="AccountName" class="form-label">Tên chủ tài khoản</label>
+                            <input asp-for="AccountName" class="form-control" />
+                            <span asp-validation-for="AccountName" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Lưu ý: Việc rút tiền có thể mất đến 24 giờ để hoàn tất xử lý.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Gửi yêu cầu rút tiền</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

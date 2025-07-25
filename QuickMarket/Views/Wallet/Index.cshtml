@@ -1,0 +1,142 @@
+@model BussinessLogic.DTOs.Wallet.WalletDto
+@{
+    ViewData["Title"] = "Ví điện tử";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Ví của tôi</h5>
+                    <h2 class="mb-4">@Model.Balance.ToString("N0") VND</h2>
+                    <div class="d-flex justify-content-between">
+                        <a href="@Url.Action("TopUp")" class="btn btn-success">Nạp tiền</a>
+                        <a href="@Url.Action("Withdraw")" class="btn btn-outline-primary">Rút tiền</a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>Cập nhật gần nhất: @Model.LastUpdate.ToString("dd/MM/yyyy HH:mm")</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Giao dịch gần đây</h5>
+                    <a href="@Url.Action("Transactions")" class="btn btn-sm btn-outline-secondary">Xem tất cả</a>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Transactions != null && ViewBag.Transactions.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Loại giao dịch</th>
+                                        <th>Số tiền</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var transaction in ViewBag.Transactions)
+                                    {
+                                        <tr>
+                                            <td>@transaction.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                @{
+                                                    string badgeClass = "";
+                                                    string transactionName = "";
+                                                    
+                                                    switch (transaction.TransactionType)
+                                                    {
+                                                        case "Deposit":
+                                                            badgeClass = "bg-success";
+                                                            transactionName = "Nạp tiền";
+                                                            break;
+                                                        case "Withdrawal":
+                                                            badgeClass = "bg-warning";
+                                                            transactionName = "Rút tiền";
+                                                            break;
+                                                        case "Purchase":
+                                                            badgeClass = "bg-danger";
+                                                            transactionName = "Mua hàng";
+                                                            break;
+                                                        case "Sale":
+                                                            badgeClass = "bg-info";
+                                                            transactionName = "Bán hàng";
+                                                            break;
+                                                        case "Refund":
+                                                            badgeClass = "bg-primary";
+                                                            transactionName = "Hoàn tiền";
+                                                            break;
+                                                        default:
+                                                            badgeClass = "bg-secondary";
+                                                            transactionName = transaction.TransactionType;
+                                                            break;
+                                                    }
+                                                }
+                                                <span class="badge @badgeClass">@transactionName</span>
+                                            </td>
+                                            <td class="@(transaction.Amount > 0 ? "text-success" : "text-danger")">
+                                                @(transaction.Amount > 0 ? "+" : "")@transaction.Amount.ToString("N0") VND
+                                            </td>
+                                            <td>
+                                                @{
+                                                    string statusBadgeClass = "";
+                                                    
+                                                    switch (transaction.Status)
+                                                    {
+                                                        case "Completed":
+                                                            statusBadgeClass = "bg-success";
+                                                            break;
+                                                        case "Pending":
+                                                            statusBadgeClass = "bg-warning";
+                                                            break;
+                                                        case "Failed":
+                                                            statusBadgeClass = "bg-danger";
+                                                            break;
+                                                        default:
+                                                            statusBadgeClass = "bg-secondary";
+                                                            break;
+                                                    }
+                                                }
+                                                <span class="badge @statusBadgeClass">@transaction.Status</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <p>Không có giao dịch nào.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Display success or error messages
+        $(document).ready(function() {
+            var successMessage = '@TempData["SuccessMessage"]';
+            var errorMessage = '@TempData["ErrorMessage"]';
+            
+            if (successMessage && successMessage !== '') {
+                toastr.success(successMessage);
+            }
+            
+            if (errorMessage && errorMessage !== '') {
+                toastr.error(errorMessage);
+            }
+        });
+    </script>
+}

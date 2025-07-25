@@ -8,5 +8,11 @@ namespace QuickMarket.Extensions
         {
             return principal.FindFirst(claimType)?.Value;
         }
+        
+        public static int GetUserId(this ClaimsPrincipal principal)
+        {
+            var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            return userIdClaim != null ? int.Parse(userIdClaim) : 0;
+        }
     }
 }

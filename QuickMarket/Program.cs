@@ -21,10 +21,14 @@ builder.Services.AddSignalR();
 builder.Services.AddDbContext<QuickMarketContext>(options => 
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuickMarket")));
 
+// Add HTTP Client for external services
+builder.Services.AddHttpClient();
+
 // Add Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 
 // Add Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -33,6 +37,9 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<VPPayService>();
+builder.Services.AddScoped<VNPayService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));

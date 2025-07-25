@@ -2,6 +2,7 @@ using AutoMapper;
 using BussinessLogic.DTOs.Categories;
 using BussinessLogic.DTOs.Products;
 using BussinessLogic.DTOs.Users;
+using BussinessLogic.DTOs.Wallet;
 using BussinessLogic.Models;
 
 namespace QuickMarket.Helpers
@@ -25,6 +26,11 @@ namespace QuickMarket.Helpers
                 .ForMember(dest => dest.ProductReviews, opt => opt.Ignore())
                 .ForMember(dest => dest.Favorites, opt => opt.Ignore())
                 .ForMember(dest => dest.Transactions, opt => opt.Ignore());
+                
+            // Wallet mappings
+            CreateMap<Wallet, WalletDto>();
+            CreateMap<FinancialTransaction, WalletTransactionDto>()
+                .ForMember(dest => dest.Username, opt => opt.Ignore()); // Will be filled in service
 
             CreateMap<ProductReview, ProductReviewDto>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? src.User.Username : null))

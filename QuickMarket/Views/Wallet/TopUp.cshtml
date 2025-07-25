@@ -1,0 +1,68 @@
+@model BussinessLogic.DTOs.Wallet.TopupRequestDto
+@{
+    ViewData["Title"] = "Nạp tiền vào ví";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Nạp tiền vào ví</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="TopUp" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Amount" class="form-label">Số tiền (VND)</label>
+                            <input asp-for="Amount" class="form-control" />
+                            <span asp-validation-for="Amount" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Phương thức thanh toán</label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check border p-3 rounded">
+                                    <input class="form-check-input" type="radio" name="PaymentMethod" id="vnpay" value="VNPay" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="vnpay">
+                                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-VNPAY-QR.png" alt="VNPAY" height="40" class="me-2">
+                                        <span>VNPAY</span>
+                                    </label>
+                                </div>
+                                <div class="form-check border p-3 rounded text-muted">
+                                    <input class="form-check-input" type="radio" name="PaymentMethod" id="creditcard" value="CreditCard" disabled>
+                                    <label class="form-check-label d-flex align-items-center" for="creditcard">
+                                        <i class="fas fa-credit-card me-2" style="font-size: 1.5rem;"></i>
+                                        <span>Thẻ tín dụng (Sắp ra mắt)</span>
+                                    </label>
+                                </div>
+                                <div class="form-check border p-3 rounded text-muted">
+                                    <input class="form-check-input" type="radio" name="PaymentMethod" id="banktransfer" value="BankTransfer" disabled>
+                                    <label class="form-check-label d-flex align-items-center" for="banktransfer">
+                                        <i class="fas fa-university me-2" style="font-size: 1.5rem;"></i>
+                                        <span>Chuyển khoản ngân hàng (Sắp ra mắt)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Tiến hành thanh toán</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt"></i> Thanh toán an toàn và bảo mật qua cổng VNPAY
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,165 @@
+@model IEnumerable<BussinessLogic.DTOs.Wallet.WalletTransactionDto>
+@{
+    ViewData["Title"] = "Lịch sử giao dịch";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Lịch sử giao dịch</h5>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Quay lại ví</a>
+        </div>
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã giao dịch</th>
+                                <th>Thời gian</th>
+                                <th>Loại giao dịch</th>
+                                <th>Số tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Mô tả</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var transaction in Model)
+                            {
+                                <tr>
+                                    <td>@transaction.TransactionId</td>
+                                    <td>@transaction.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @{
+                                            string badgeClass = "";
+                                            string transactionName = "";
+                                            
+                                            switch (transaction.TransactionType)
+                                            {
+                                                case "Deposit":
+                                                    badgeClass = "bg-success";
+                                                    transactionName = "Nạp tiền";
+                                                    break;
+                                                case "Withdrawal":
+                                                    badgeClass = "bg-warning";
+                                                    transactionName = "Rút tiền";
+                                                    break;
+                                                case "Purchase":
+                                                    badgeClass = "bg-danger";
+                                                    transactionName = "Mua hàng";
+                                                    break;
+                                                case "Sale":
+                                                    badgeClass = "bg-info";
+                                                    transactionName = "Bán hàng";
+                                                    break;
+                                                case "Refund":
+                                                    badgeClass = "bg-primary";
+                                                    transactionName = "Hoàn tiền";
+                                                    break;
+                                                default:
+                                                    badgeClass = "bg-secondary";
+                                                    transactionName = transaction.TransactionType;
+                                                    break;
+                                            }
+                                        }
+                                        <span class="badge @badgeClass">@transactionName</span>
+                                    </td>
+                                    <td class="@(transaction.Amount > 0 ? "text-success" : "text-danger")">
+                                        @(transaction.Amount > 0 ? "+" : "")@transaction.Amount.ToString("N0") VND
+                                    </td>
+                                    <td>
+                                        @{
+                                            string statusBadgeClass = "";
+                                            string statusName = "";
+                                            
+                                            switch (transaction.Status)
+                                            {
+                                                case "Completed":
+                                                    statusBadgeClass = "bg-success";
+                                                    statusName = "Hoàn thành";
+                                                    break;
+                                                case "Pending":
+                                                    statusBadgeClass = "bg-warning";
+                                                    statusName = "Đang xử lý";
+                                                    break;
+                                                case "Failed":
+                                                    statusBadgeClass = "bg-danger";
+                                                    statusName = "Thất bại";
+                                                    break;
+                                                case "Canceled":
+                                                    statusBadgeClass = "bg-secondary";
+                                                    statusName = "Đã hủy";
+                                                    break;
+                                                default:
+                                                    statusBadgeClass = "bg-secondary";
+                                                    statusName = transaction.Status;
+                                                    break;
+                                            }
+                                        }
+                                        <span class="badge @statusBadgeClass">@statusName</span>
+                                    </td>
+                                    <td>
+                                        <span title="@transaction.Description">
+                                            @(transaction.Description?.Length > 30 
+                                                ? transaction.Description.Substring(0, 30) + "..."
+                                                : transaction.Description)
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            @{
+                                // Phân trang đơn giản
+                                // Trong thực tế, bạn cần truyền thông tin phân trang qua ViewBag
+                                int currentPage = ViewBag.CurrentPage ?? 1;
+                                int totalPages = ViewBag.TotalPages ?? 1;
+                                
+                                // Giả sử có 5 trang
+                                if (totalPages == 0) totalPages = 1;
+                                
+                                for (int i = 1; i <= totalPages; i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <a class="page-link" href="@Url.Action("Transactions", new { page = i })">@i</a>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                    <p>Chưa có giao dịch nào.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Display success or error messages
+        $(document).ready(function() {
+            var successMessage = '@TempData["SuccessMessage"]';
+            var errorMessage = '@TempData["ErrorMessage"]';
+            
+            if (successMessage && successMessage !== '') {
+                toastr.success(successMessage);
+            }
+            
+            if (errorMessage && errorMessage !== '') {
+                toastr.error(errorMessage);
+            }
+        });
+    </script>
+}
