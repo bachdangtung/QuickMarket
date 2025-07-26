@@ -14,10 +14,6 @@ namespace Services.Interfaces
         Task<ServiceResult<string>> TopUpWithVNPayAsync(TopupRequestDto request, string ipAddress);
         Task<ServiceResult> CompleteVNPayTopUpAsync(VNPayResponse response);
         
-        // Legacy VPPay methods (có thể xóa hoặc đánh dấu obsolete sau khi chuyển đổi hoàn toàn sang VNPay)
-        Task<ServiceResult<string>> TopUpWithVPPayAsync(TopupRequestDto request);
-        Task<ServiceResult> CompleteVPPayTopUpAsync(VPPayResponse response);
-        
         // Withdraw
         Task<ServiceResult> WithdrawFundsAsync(WithdrawRequestDto request);
         

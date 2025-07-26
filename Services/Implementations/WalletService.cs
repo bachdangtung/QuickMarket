@@ -17,20 +17,17 @@ namespace Services.Implementations
         private readonly IWalletRepository _walletRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
-        private readonly VPPayService _vpPayService;
         private readonly VNPayService _vnPayService;
 
         public WalletService(
             IWalletRepository walletRepository,
             IUserRepository userRepository,
             IMapper mapper,
-            VPPayService vpPayService,
             VNPayService vnPayService)
         {
             _walletRepository = walletRepository;
             _userRepository = userRepository;
             _mapper = mapper;
-            _vpPayService = vpPayService;
             _vnPayService = vnPayService;
         }
 
@@ -93,43 +90,6 @@ namespace Services.Implementations
             }
         }
 
-        public async Task<ServiceResult<string>> TopUpWithVPPayAsync(TopupRequestDto request)
-        {
-            try
-            {
-                // Validate request
-                if (request.Amount <= 0)
-                    return ServiceResult<string>.ErrorResult("Số tiền phải lớn hơn 0.");
-
-                var user = await _userRepository.GetUserByIdAsync(request.UserId);
-                if (user == null)
-                    return ServiceResult<string>.ErrorResult("Không tìm thấy người dùng.");
-
-                // Create pending transaction
-                var orderId = $"TOP{DateTime.Now.Ticks}";
-                var transaction = new FinancialTransaction
-                {
-                    UserId = request.UserId,
-                    TransactionType = TransactionType.Deposit.ToString(),
-                    Amount = request.Amount,
-                    TransactionDate = DateTime.Now,
-                    Status = TransactionStatus.Pending.ToString(),
-                    Description = $"Nạp tiền qua {request.PaymentMethod} - ID đơn hàng: {orderId}"
-                };
-
-                var createdTransaction = await _walletRepository.CreateTransactionAsync(transaction);
-
-                // Generate payment URL
-                var paymentUrl = _vpPayService.GeneratePaymentUrl(request, orderId);
-                
-                return ServiceResult<string>.SuccessResult(paymentUrl, "Tạo yêu cầu nạp tiền thành công");
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<string>.ErrorResult($"Lỗi khi tạo yêu cầu nạp tiền: {ex.Message}");
-            }
-        }
-
         public async Task<ServiceResult<string>> TopUpWithVNPayAsync(TopupRequestDto request, string ipAddress)
         {
             try
@@ -188,48 +148,6 @@ namespace Services.Implementations
                     t.Description != null && 
                     response.vnp_TxnRef != null &&
                     t.Description.Contains(response.vnp_TxnRef) && 
-                    t.Status == TransactionStatus.Pending.ToString());
-
-                if (transaction == null)
-                {
-                    return ServiceResult.ErrorResult("Không tìm thấy giao dịch nạp tiền tương ứng.");
-                }
-
-                // Cập nhật trạng thái giao dịch
-                await _walletRepository.UpdateTransactionStatusAsync(
-                    transaction.TransactionId, TransactionStatus.Completed.ToString());
-
-                // Cập nhật số dư ví
-                await _walletRepository.UpdateWalletBalanceAsync(transaction.UserId, transaction.Amount);
-
-                return ServiceResult.SuccessResult("Nạp tiền thành công");
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult.ErrorResult($"Lỗi khi hoàn tất nạp tiền: {ex.Message}");
-            }
-        }
-
-        public async Task<ServiceResult> CompleteVPPayTopUpAsync(VPPayResponse response)
-        {
-            try
-            {
-                // Validate response
-                if (!_vpPayService.ValidatePaymentResponse(response))
-                {
-                    return ServiceResult.ErrorResult("Chữ ký không hợp lệ. Thanh toán có thể bị giả mạo.");
-                }
-
-                if (!response.Success)
-                {
-                    return ServiceResult.ErrorResult($"Thanh toán thất bại: {response.Message}");
-                }
-
-                // Tìm giao dịch theo OrderId trong description
-                var transactions = await _walletRepository.GetUserTransactionsAsync(0, 0, 100);
-                var transaction = transactions.FirstOrDefault(t => 
-                    t.Description != null && 
-                    t.Description.Contains(response.OrderId) && 
                     t.Status == TransactionStatus.Pending.ToString());
 
                 if (transaction == null)

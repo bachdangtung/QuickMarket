@@ -80,19 +80,10 @@ namespace Services.Implementations
 
         public async Task<ProductDto?> GetProductByIdWithNestedReviewsAsync(int productId)
         {
-            // Debug info
-            System.Diagnostics.Debug.WriteLine($"Fetching product with ID: {productId} with reviews");
-            
             var product = await _productRepository.GetProductByIdAsync(productId);
             if (product == null) return null;
             
-            // Debug info
-            System.Diagnostics.Debug.WriteLine($"Product found with {product.ProductReviews?.Count ?? 0} reviews");
-            
             var productDto = _mapper.Map<ProductDto>(product);
-            
-            // Debug info
-            System.Diagnostics.Debug.WriteLine($"After mapping - DTO has {productDto.Reviews?.Count ?? 0} reviews");
             
             // Initialize if null
             if (productDto.Reviews == null)
@@ -105,9 +96,6 @@ namespace Services.Implementations
             var mainReviews = productDto.Reviews.Where(r => r.ThreadId == null).ToList();
             var replies = productDto.Reviews.Where(r => r.ThreadId != null).ToList();
             
-            // Debug info
-            System.Diagnostics.Debug.WriteLine($"Split into {mainReviews.Count} main reviews and {replies.Count} replies");
-
             // Gán replies vào review gốc tương ứng
             foreach (var reply in replies)
             {

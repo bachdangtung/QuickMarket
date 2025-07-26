@@ -384,9 +384,6 @@ namespace QuickMarket.Controllers
                     TempData["SuccessMessage"] = "Bình luận của bạn đã được gửi thành công.";
                 }
                 
-                // Add debug information and append a timestamp to force a fresh reload
-                System.Diagnostics.Debug.WriteLine($"Review added successfully: Rating={rating}, Comment={comment}, ThreadId={threadId}");
-                
                 // Add a timestamp to the redirect to force a fresh reload
                 string timestamp = DateTime.Now.Ticks.ToString();
                 return RedirectToAction(nameof(Details), new { id = productId, t = timestamp });

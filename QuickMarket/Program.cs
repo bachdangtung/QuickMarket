@@ -37,7 +37,6 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<VPPayService>();
 builder.Services.AddScoped<VNPayService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 
@@ -56,7 +55,7 @@ builder.Services.AddAuthentication(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     options.SlidingExpiration = true;
 })
 .AddGoogle(options =>

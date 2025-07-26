@@ -45,14 +45,10 @@ namespace QuickMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TopUp(TopupRequestDto request)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(request);
-            }
 
             request.UserId = User.GetUserId();
             // Sử dụng URL từ cấu hình trong appsettings.json thay vì tạo động
-            request.ReturnUrl = "https://d94af6116a67.ngrok-free.app/Wallet/VNPayReturn";
+            request.ReturnUrl = "http://localhost:5285/Wallet/VNPayReturn";
             request.PaymentMethod = "VNPay"; // Mặc định sử dụng VNPAY
             
             // Lấy địa chỉ IP của khách hàng (cần thiết cho VNPAY)
@@ -94,24 +90,6 @@ namespace QuickMarket.Controllers
             return RedirectToAction("Index");
         }
         
-        // Phương thức cũ cho VPPay (có thể xóa khi chuyển hoàn toàn sang VNPAY)
-        [Authorize]
-        public async Task<IActionResult> TopUpComplete(VPPayResponse response)
-        {
-            var result = await _walletService.CompleteVPPayTopUpAsync(response);
-            
-            if (result.Success)
-            {
-                TempData["SuccessMessage"] = "Nạp tiền thành công!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = result.Message;
-            }
-            
-            return RedirectToAction("Index");
-        }
-
         [Authorize]
         public IActionResult Withdraw()
         {
